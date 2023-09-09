@@ -2722,6 +2722,25 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
 
 [[package]]
+name = "hex-literal"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d70693199b3cf4552f3fa720b54163927a3ebed2aef240efaf556033ab336a11"
+dependencies = [
+ "hex-literal-impl",
+ "proc-macro-hack",
+]
+
+[[package]]
+name = "hex-literal-impl"
+version = "0.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "59448fc2f82a5fb6907f78c3d69d843e82ff5b051923313cc4438cb0c7b745a8"
+dependencies = [
+ "proc-macro-hack",
+]
+
+[[package]]
 name = "hkdf"
 version = "0.12.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4411,6 +4430,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "node-primitives"
+version = "2.0.0"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v1.0.0#948fbd2fd1233dc26dbb9f9bbc1d2cca2c03945d"
+dependencies = [
+ "sp-core",
+ "sp-runtime",
+]
+
+[[package]]
 name = "node-template"
 version = "4.0.0-dev"
 dependencies = [
@@ -4419,6 +4447,7 @@ dependencies = [
  "frame-benchmarking-cli",
  "frame-system",
  "futures",
+ "hex-literal",
  "jsonrpsee",
  "node-template-runtime",
  "pallet-transaction-payment",
@@ -4438,6 +4467,7 @@ dependencies = [
  "sc-telemetry",
  "sc-transaction-pool",
  "sc-transaction-pool-api",
+ "serde_json",
  "sp-api",
  "sp-block-builder",
  "sp-blockchain",
@@ -4465,14 +4495,20 @@ dependencies = [
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
+ "node-primitives",
  "pallet-aura",
  "pallet-balances",
+ "pallet-collective",
+ "pallet-democracy",
  "pallet-grandpa",
+ "pallet-preimage",
+ "pallet-scheduler",
  "pallet-sudo",
  "pallet-template",
  "pallet-timestamp",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
+ "pallet-treasury",
  "parity-scale-codec",
  "scale-info",
  "sp-api",
@@ -4729,6 +4765,41 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-collective"
+version = "4.0.0-dev"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v1.0.0#948fbd2fd1233dc26dbb9f9bbc1d2cca2c03945d"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "log",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-democracy"
+version = "4.0.0-dev"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v1.0.0#948fbd2fd1233dc26dbb9f9bbc1d2cca2c03945d"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "log",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-grandpa"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v1.0.0#948fbd2fd1233dc26dbb9f9bbc1d2cca2c03945d"
@@ -4749,6 +4820,40 @@ dependencies = [
  "sp-session",
  "sp-staking",
  "sp-std",
+]
+
+[[package]]
+name = "pallet-preimage"
+version = "4.0.0-dev"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v1.0.0#948fbd2fd1233dc26dbb9f9bbc1d2cca2c03945d"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "log",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-scheduler"
+version = "4.0.0-dev"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v1.0.0#948fbd2fd1233dc26dbb9f9bbc1d2cca2c03945d"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "log",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "sp-weights",
 ]
 
 [[package]]
@@ -4794,11 +4899,14 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
+ "pallet-democracy",
+ "pallet-scheduler",
  "parity-scale-codec",
  "scale-info",
  "sp-core",
  "sp-io",
  "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -4861,6 +4969,23 @@ dependencies = [
  "sp-api",
  "sp-runtime",
  "sp-weights",
+]
+
+[[package]]
+name = "pallet-treasury"
+version = "4.0.0-dev"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v1.0.0#948fbd2fd1233dc26dbb9f9bbc1d2cca2c03945d"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "impl-trait-for-tuples",
+ "pallet-balances",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]

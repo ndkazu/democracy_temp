@@ -14,24 +14,34 @@ mod tests;
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 pub mod weights;
+pub mod types;
+pub use types::*;
 pub use weights::*;
+pub use pallet_democracy as DEM;
+pub use frame_support::traits::UnfilteredDispatchable;
+pub use frame_support::dispatch::GetDispatchInfo;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use super::*;
-	use frame_support::pallet_prelude::*;
-	use frame_system::pallet_prelude::*;
+	pub use super::*;
 
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
 
 	/// Configure the pallet by specifying the parameters and types on which it depends.
 	#[pallet::config]
-	pub trait Config: frame_system::Config {
+	pub trait Config: frame_system::Config + DEM::Config {
 		/// Because this pallet emits events, it depends on the runtime's definition of an event.
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 		/// Type representing the weight of this pallet
-		type WeightInfo: WeightInfo;
+		type WeightInfov: WeightInfo;
+		type RuntimeCallv: Parameter
+		+ UnfilteredDispatchable<RuntimeOrigin = <Self as frame_system::Config>::RuntimeOrigin>
+		+ From<Call<Self>>
+		+ Into<<Self as frame_system::Config>::RuntimeCall>
+		+ GetDispatchInfo;
+		type Delay: Get<BlockNumberFor<Self>>;
+		type CheckDelay: Get<BlockNumberFor<Self>>;
 	}
 
 	// The pallet's runtime storage items.
@@ -42,6 +52,8 @@ pub mod pallet {
 	// https://docs.substrate.io/main-docs/build/runtime-storage/#declaring-storage-items
 	pub type Something<T> = StorageValue<_, u32>;
 
+
+
 	// Pallets use events to inform users when important changes are made.
 	// https://docs.substrate.io/main-docs/build/events-errors/
 	#[pallet::event]
@@ -49,7 +61,7 @@ pub mod pallet {
 	pub enum Event<T: Config> {
 		/// Event documentation should end with an array that provides descriptive names for event
 		/// parameters. [something, who]
-		SomethingStored { something: u32, who: T::AccountId },
+		SomethingStored { something: u32 },
 	}
 
 	// Errors inform users that something went wrong.
@@ -69,25 +81,25 @@ pub mod pallet {
 		/// An example dispatchable that takes a singles value as a parameter, writes the value to
 		/// storage and emits an event. This function must be dispatched by a signed extrinsic.
 		#[pallet::call_index(0)]
-		#[pallet::weight(T::WeightInfo::do_something())]
-		pub fn do_something(origin: OriginFor<T>, something: u32) -> DispatchResult {
+		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1).ref_time())]
+		pub fn do_something(origin: OriginFor<T>, something: u32) -> DispatchResultWithPostInfo  {
 			// Check that the extrinsic was signed and get the signer.
 			// This function will return an error if the extrinsic is not signed.
 			// https://docs.substrate.io/main-docs/build/origins/
-			let who = ensure_signed(origin)?;
+			let who = ensure_root(origin)?;
 
 			// Update storage.
 			<Something<T>>::put(something);
 
 			// Emit an event.
-			Self::deposit_event(Event::SomethingStored { something, who });
+			Self::deposit_event(Event::SomethingStored { something});
 			// Return a successful DispatchResultWithPostInfo
-			Ok(())
+			Ok(().into())
 		}
 
 		/// An example dispatchable that may throw a custom error.
 		#[pallet::call_index(1)]
-		#[pallet::weight(T::WeightInfo::cause_error())]
+		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1).ref_time())]
 		pub fn cause_error(origin: OriginFor<T>) -> DispatchResult {
 			let _who = ensure_signed(origin)?;
 
@@ -104,5 +116,31 @@ pub mod pallet {
 				},
 			}
 		}
+
+		#[pallet::call_index(2)]
+		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1).ref_time())]
+		pub fn refera(origin: OriginFor<T>, something:u32)-> DispatchResult {
+			let who = ensure_signed(origin)?;
+			//Make Call from do_something
+			let call = Call::<T>::do_something{
+				something
+			};
+			let call_formatted = Self::get_formatted_call(call.into());
+			let proposal = Self::make_proposal(call_formatted.clone().into());
+			//Self::add_proposal(who,call_formatted.into()).ok();
+			let delay = T::Delay::get();
+			let _index=Self::start_dem_referendum(proposal,delay);
+			Ok(())
+		}
+
+		#[pallet::call_index(3)]
+		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1).ref_time())]
+		pub fn vote(origin: OriginFor<T>,index:DEM::ReferendumIndex)-> DispatchResult {
+			let _who = ensure_signed(origin.clone())?;
+			let config = Self::account_vote(<T as DEM::Config>::MinimumDeposit::get());
+			DEM::Pallet::<T>::vote(origin,index,config).ok();
+			Ok(())
+			
 	}
+}
 }
