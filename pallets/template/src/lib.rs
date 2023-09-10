@@ -14,8 +14,8 @@ mod tests;
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 pub mod weights;
-pub mod types;
-pub use types::*;
+pub mod functions;
+pub use functions::*;
 pub use weights::*;
 pub use pallet_democracy as DEM;
 pub use frame_support::traits::UnfilteredDispatchable;
@@ -135,9 +135,9 @@ pub mod pallet {
 
 		#[pallet::call_index(3)]
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1).ref_time())]
-		pub fn vote(origin: OriginFor<T>,index:DEM::ReferendumIndex)-> DispatchResult {
+		pub fn vote(origin: OriginFor<T>,index:DEM::ReferendumIndex,vote:bool)-> DispatchResult {
 			let _who = ensure_signed(origin.clone())?;
-			let config = Self::account_vote(<T as DEM::Config>::MinimumDeposit::get());
+			let config = Self::account_vote(<T as DEM::Config>::MinimumDeposit::get(),vote);
 			DEM::Pallet::<T>::vote(origin,index,config).ok();
 			Ok(())
 			

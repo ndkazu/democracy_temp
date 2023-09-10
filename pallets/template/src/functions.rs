@@ -53,8 +53,8 @@ pub fn start_dem_referendum(proposal:BoundedCallOf<T> ,delay:BlockNumberFor<T>) 
 }
 
 
-pub fn account_vote(b: BalanceOf<T>) -> DEM::AccountVote<BalanceOf<T>> {
-	let v = DEM::Vote { aye: true, conviction: DEM::Conviction::Locked1x };
+pub fn account_vote(b: BalanceOf<T>, choice:bool) -> DEM::AccountVote<BalanceOf<T>> {
+	let v = DEM::Vote { aye: choice, conviction: DEM::Conviction::Locked1x };
 
 	DEM::AccountVote::Standard { vote: v, balance: b }
 }
