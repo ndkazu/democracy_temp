@@ -33,10 +33,12 @@ sp-runtime = { git = "https://github.com/paritytech/polkadot-sdk", branch = "rel
 default = ["std"]
 std = [
 	"codec/std",
+	"serde/std",
 	"frame-benchmarking?/std",
 	"frame-support/std",
 	"frame-system/std",
 	"scale-info/std",
+	"sp-std/std",
 	"pallet-collective/std",
 ]
 runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks"]
