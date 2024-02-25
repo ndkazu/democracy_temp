@@ -51,7 +51,6 @@ frame-benchmarking = {  version = "28.0.0",  default-features = false, git = "ht
 frame-system-benchmarking = {  version = "28.0.0",  default-features = false, git = "https://github.com/paritytech/polkadot-sdk", optional = true , branch = "release-polkadot-v1.7.0" }
 
 # Local Dependencies
-pallet-template = {  default-features = false, path = "../pallets/template" }
 pallet-skills = {  default-features = false, path = "../pallets/skills" }
 
 [build-dependencies]
@@ -74,7 +73,6 @@ std = [
 	"pallet-balances/std",
 	"pallet-grandpa/std",
 	"pallet-sudo/std",
-	"pallet-template/std",
 	"pallet-collective/std",
 	"pallet-timestamp/std",
 	"pallet-transaction-payment-rpc-runtime-api/std",
@@ -102,7 +100,6 @@ runtime-benchmarks = [
 	"pallet-balances/runtime-benchmarks",
 	"pallet-grandpa/runtime-benchmarks",
 	"pallet-sudo/runtime-benchmarks",
-	"pallet-template/runtime-benchmarks",
 	"pallet-timestamp/runtime-benchmarks",
 	"sp-runtime/runtime-benchmarks",
 ]
@@ -116,7 +113,6 @@ try-runtime = [
 	"pallet-balances/try-runtime",
 	"pallet-grandpa/try-runtime",
 	"pallet-sudo/try-runtime",
-	"pallet-template/try-runtime",
 	"pallet-timestamp/try-runtime",
 	"pallet-transaction-payment/try-runtime",
 ]

@@ -1,5 +1,5 @@
 pub use super::*;
-use frame_support::traits::fungibles::metadata;
+//use frame_support::traits::fungibles::metadata;
 pub use frame_support::{
 	assert_ok,
 	dispatch::{DispatchResult},

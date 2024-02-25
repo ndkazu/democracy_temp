@@ -1,7 +1,7 @@
 [package]
 name = "pallet-skills"
 version = "4.0.0-dev"
-description = "FRAME pallet template for defining custom runtime logic."
+description = "Skills management."
 authors = ["Kazunobu Ndong"]
 homepage = "https://github.com/ndkazu/democracy_temp"
 edition = "2021"
