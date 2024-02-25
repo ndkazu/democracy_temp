@@ -1,3 +1,4 @@
+#![cfg_attr(not(feature = "std"), no_std)]
 pub use pallet::*;
 /* 
 #[cfg(test)]
@@ -51,9 +52,15 @@ pub mod pallet {
 	#[pallet::getter(fn something)]
 	pub type Something<T> = StorageValue<_, u32>;
 
+	#[pallet::type_value]
+	///Initializing function for the total number of employees
+	pub fn InitTotalMembers<T: Config>() -> u32 {
+		0
+	}
+
 	#[pallet::storage]
 	#[pallet::getter(fn employees_number)]
-	pub type EmployeesNumber<T> = StorageValue<_, u32>;
+	pub type EmployeesNumber<T> = StorageValue<_, u32, ValueQuery, InitTotalMembers<T>>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn user_ver_skills)]
@@ -68,7 +75,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn employee)]
 	pub type EmployeeLog<T:Config> = 
-		StorageMap<_, Twox64Concat, AccountIdOf<T>,Employee<BoundedVecOf<T>,BalanceOf<T>,BlockNumberOf<T>>,OptionQuery>;
+		StorageMap<_, Twox64Concat, AccountIdOf<T>,Employee<T>,OptionQuery>;
 
 	#[pallet::type_value]
 	/// Initializer for skills list

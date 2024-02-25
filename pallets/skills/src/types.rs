@@ -81,6 +81,33 @@ impl<T:Config>Skill<T>{
 
 #[derive(Clone, Encode, Decode, Default, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 #[scale_info(skip_type_params(T))]
+pub struct Employee<T:Config>{
+	pub name: BoundedVecOf<T>,
+	pub uid: u32,
+	pub sp:u32,
+	pub xp:u32,
+	pub wage: BalanceOf<T>,
+	pub creation_block: BlockNumberOf<T>,
+}
+impl<T:Config>Employee<T>{
+	pub fn new(account:T::AccountId, name:BoundedVecOf<T>) -> Self{
+		let uid = EmployeesNumber::<T>::get();
+		let sp = 0;
+		let xp = 0;
+		let wage = T::BasicWage::get();
+		let creation_block  = <frame_system::Pallet<T>>::block_number();
+
+		let new_employee = Employee{name,uid,sp,xp,wage,creation_block};
+		EmployeeLog::<T>::insert(account,&new_employee);
+		EmployeesNumber::<T>::put(uid.saturating_add(1));
+
+		new_employee
+
+	}
+}
+
+#[derive(Clone, Encode, Decode, Default, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
+#[scale_info(skip_type_params(T))]
 #[cfg_attr(feature = "std", derive(Debug))]
 pub struct SkillProposal<T: Config>{	
 	pub skill: Option<Skill<T>>,
@@ -91,12 +118,3 @@ pub struct SkillProposal<T: Config>{
 	pub approved: Approvals,
 }
 
-#[derive(Clone, Encode, Decode, Default, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
-pub struct Employee<BoundedVecOf,BalanceOf,BlockNumberOf>{
-	pub name: BoundedVecOf,
-	pub uid: u32,
-	pub sp:u32,
-	pub xp:u32,
-	pub wage: BalanceOf,
-	pub creation_block: BlockNumberOf,
-}
