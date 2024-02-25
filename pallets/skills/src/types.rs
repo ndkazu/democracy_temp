@@ -1,4 +1,5 @@
 pub use super::*;
+use frame_support::traits::fungibles::metadata;
 pub use frame_support::{
 	assert_ok,
 	dispatch::{DispatchResult},
@@ -60,6 +61,22 @@ pub struct Skill<T: Config>{
 	pub skill_level:SkillLevel,
     pub confirmed:bool,
     pub skill_number: u8,
+}
+
+impl<T:Config>Skill<T>{
+	pub fn new(metadata:BoundedVecOf<T>, skill_type: SkillFamily) -> Self{
+		let creation_block = <frame_system::Pallet<T>>::block_number();
+		let skill_level = SkillLevel::default();
+		let skill_list:BoundedVec<Skill<T>,T::MaxSkills> = Skills::get();
+		let skill_number = skill_list.into_inner().len() as u8;
+		let new_skill = Skill{metadata,skill_type,creation_block,skill_level,confirmed:false,skill_number};
+
+		Skills::<T>::mutate(|list|{
+			list.try_push(new_skill.clone()).map_err(|_| "Max number of skills reached").ok();
+		});
+
+		new_skill
+	}
 }
 
 #[derive(Clone, Encode, Decode, Default, PartialEq, Eq, TypeInfo, MaxEncodedLen)]

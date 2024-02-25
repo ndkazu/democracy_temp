@@ -56,8 +56,13 @@ pub mod pallet {
 	pub type EmployeesNumber<T> = StorageValue<_, u32>;
 
 	#[pallet::storage]
-	#[pallet::getter(fn user_skills)]
-	pub type UserSkills<T:Config> = 
+	#[pallet::getter(fn user_ver_skills)]
+	pub type UserVerifiedSkills<T:Config> = 
+		StorageMap<_, Twox64Concat, AccountIdOf<T>,BoundedVec<Skill<T>,T::MaxSkills>,ValueQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn user_unv_skills)]
+	pub type UserUnverifiedSkills<T:Config> = 
 		StorageMap<_, Twox64Concat, AccountIdOf<T>,BoundedVec<Skill<T>,T::MaxSkills>,ValueQuery>;
 
 	#[pallet::storage]
