@@ -1,6 +1,6 @@
 [workspace]
 members = [
-    "node",
+    "node", "pallets/skills",
     "pallets/template",
     "runtime",
 ]

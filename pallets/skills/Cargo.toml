@@ -1,18 +1,19 @@
 [package]
-name = "pallet-template"
+name = "pallet-skills"
 version = "4.0.0-dev"
 description = "FRAME pallet template for defining custom runtime logic."
-authors = ["Substrate DevHub <https://github.com/substrate-developer-hub>"]
-homepage = "https://substrate.io"
+authors = ["Kazunobu Ndong"]
+homepage = "https://github.com/ndkazu/democracy_temp"
 edition = "2021"
 license = "MIT-0"
 publish = false
-repository = "https://github.com/substrate-developer-hub/substrate-node-template/"
+repository = "https://github.com/ndkazu/democracy_temp"
 
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
+sp-std = { default-features = false,git = "https://github.com/paritytech/polkadot-sdk",  branch = "release-polkadot-v1.7.0" }
 codec = { package = "parity-scale-codec", version = "3.6.5", default-features = false, features = [
 	"derive",
 ] }
@@ -20,6 +21,8 @@ scale-info = { version = "2.10.0", default-features = false, features = ["derive
 frame-benchmarking = {  version = "28.0.0",  default-features = false, optional = true, git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.7.0" }
 frame-support = {  default-features = false, git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.7.0" }
 frame-system = {  default-features = false, git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.7.0" }
+serde = { version = "1.0.183", default-features = false, features = ["derive"] }
+pallet-collective = { git = "https://github.com/paritytech/polkadot-sdk",  branch = "release-polkadot-v1.7.0", default-features = false }
 
 [dev-dependencies]
 sp-core = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.7.0" }
@@ -34,6 +37,7 @@ std = [
 	"frame-support/std",
 	"frame-system/std",
 	"scale-info/std",
+	"pallet-collective/std",
 ]
 runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks"]
 try-runtime = ["frame-support/try-runtime"]
