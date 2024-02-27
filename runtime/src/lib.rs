@@ -246,6 +246,7 @@ parameter_types!{
 }
 impl pallet_skills::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
+	type RuntimeCall = RuntimeCall;
 	type StringLimit = ConstU32<256>;
 	type BasicWage = BasicWage;
 	type Currency = Balances;

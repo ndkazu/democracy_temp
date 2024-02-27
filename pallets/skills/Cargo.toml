@@ -25,6 +25,7 @@ frame-system = {  default-features = false, git = "https://github.com/paritytech
 serde = { version = "1.0.183", default-features = false, features = ["derive"] }
 pallet-collective = { git = "https://github.com/paritytech/polkadot-sdk",  branch = "release-polkadot-v1.7.0", default-features = false }
 pallet-balances = {   default-features = false, git = "https://github.com/paritytech/polkadot-sdk",  branch = "release-polkadot-v1.7.0" }
+pallet-sudo = {   default-features = false, git = "https://github.com/paritytech/polkadot-sdk",  branch = "release-polkadot-v1.7.0" }
 
 [dev-dependencies]
 sp-core = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.7.0" }
@@ -43,6 +44,7 @@ std = [
 	"sp-std/std",
 	"pallet-balances/std",
 	"pallet-collective/std",
+	"pallet-sudo/std"
 ]
 runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks"]
 try-runtime = ["frame-support/try-runtime"]

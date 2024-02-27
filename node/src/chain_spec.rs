@@ -1,9 +1,9 @@
-use node_template_runtime::{AccountId, RuntimeGenesisConfig, Signature, WASM_BINARY};
+use node_template_runtime::{pallet_skills, AccountId, RuntimeGenesisConfig, Signature, WASM_BINARY};
 use sc_service::ChainType;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_consensus_grandpa::AuthorityId as GrandpaId;
 use sp_core::{sr25519, Pair, Public};
-use sp_runtime::traits::{IdentifyAccount, Verify};
+use sp_runtime::{traits::{IdentifyAccount, Verify}, AccountId32};
 
 // The URL for the telemetry server.
 // const STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
@@ -112,6 +112,14 @@ fn testnet_genesis(
 		"sudo": {
 			// Assign network admin rights.
 			"key": Some(root_key),
+		},
+		"council": {
+			"members": vec![
+				get_account_id_from_seed::<sr25519::Public>("Bob"),
+				get_account_id_from_seed::<sr25519::Public>("Alice"),
+				get_account_id_from_seed::<sr25519::Public>("Charlie"),
+			],
+			//"phantom": Default::default(),
 		},
 	})
 }

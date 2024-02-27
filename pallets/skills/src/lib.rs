@@ -1,12 +1,13 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 pub use pallet::*;
-/* 
+
 #[cfg(test)]
 mod mock;
 
 #[cfg(test)]
 mod tests;
 
+/* 
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 pub mod weights;
@@ -37,9 +38,16 @@ pub mod pallet {
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 		type Currency: ReservableCurrency<Self::AccountId>;
 		type CouncilOrigin: EnsureOrigin<<Self as frame_system::Config>::RuntimeOrigin>;
+		type RuntimeCall: Parameter
+			+ UnfilteredDispatchable<RuntimeOrigin = <Self as frame_system::Config>::RuntimeOrigin>
+			+ From<Call<Self>>
+			+ GetDispatchInfo;
+
 		/// The maximum length of data stored on-chain.
 		#[pallet::constant]
 		type StringLimit: Get<u32>;
+
+		///Basic employee wage
 		#[pallet::constant]
 		type BasicWage: Get<BalanceOf<Self>>;
 		#[pallet::constant]
@@ -109,6 +117,11 @@ pub mod pallet {
 	pub type SkillsApprovalList<T: Config> =
 	StorageMap<_, Twox64Concat, AccountIdOf<T>,Skill<T>,OptionQuery>;
 
+	#[pallet::storage]
+	#[pallet::getter(fn get_proposal)]
+	pub type SkillsProposalList<T: Config> =
+	StorageMap<_, Twox64Concat, AccountIdOf<T>,SkillProposal<T>,OptionQuery>;
+
 
 	// Pallets use events to inform users when important changes are made.
 	// https://docs.substrate.io/main-docs/build/events-errors/
@@ -122,6 +135,12 @@ pub mod pallet {
 		NewSkillCreated{when: BlockNumberFor<T>, what: BoundedVecOf<T> },
 		/// A skill creation was rejected
 		SkillCreationRejected { when: BlockNumberFor<T>, what: BoundedVecOf<T> },
+		/// A member of the Background Council has voted
+		BackgroundCouncilVoted{who: T::AccountId, proposal_index: u32, when: BlockNumberOf<T>},
+		/// A proposal has been closed by a Council member
+		CouncilSessionClosed{who: T::AccountId, proposal_index: u32, when: BlockNumberOf<T>},
+		/// A new employee was created
+		EmployeeCreated{who: BoundedVecOf<T>, when: BlockNumberOf<T>},
 	}
 
 	// Errors inform users that something went wrong.
@@ -131,12 +150,24 @@ pub mod pallet {
 		NoneValue,
 		/// Errors should have helpful documentation associated with them.
 		StorageOverflow,
-		///This is not a recognized skill
+		/// This is not a recognized skill
 		NotARecognizedSkill,
-		///No skill submitted by this user
+		/// No skill submitted by this user
 		NoSkillSubmited,
-		///This account is not connected to an employee account
+		/// This account is not connected to an employee account
 		NotAnEmployee,
+		/// This account does not belong to a council member
+		NotACouncilMember,
+		/// The Proposal does not exist
+		ProposalDoesNotExist,
+	}
+
+	#[pallet::hooks]
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+		/// Weight: see `begin_block`
+		fn on_initialize(n: BlockNumberFor<T>) -> Weight {
+			Self::begin_block(n)
+		}
 	}
 
 	// Dispatchable functions allows users to interact with the pallet and invoke state changes.
@@ -202,8 +233,84 @@ pub mod pallet {
 			let who = ensure_signed(origin)?;
 			ensure!(Self::employee(&who).is_some(), Error::<T>::NotAnEmployee);
 			//create new skill
-			let _skill:Skill<T> = Skill::new(metadata,skill_type,who);
+			let skill:Skill<T> = Skill::new(metadata,skill_type,who.clone());
 
+			Self::start_council_session(who,skill).ok();
+
+
+			Ok(().into())
+		}
+
+		#[pallet::call_index(3)]
+		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1).ref_time())]
+		pub fn council_vote(origin:OriginFor<T>,candidate:T::AccountId,approve:bool) -> DispatchResultWithPostInfo {
+			let caller = ensure_signed(origin)?;
+			ensure!(
+				Coll::Pallet::<T, Instance1>::members().contains(&caller),
+				Error::<T>::NotACouncilMember
+			);
+			let proposal_all = Self::get_proposal(&candidate).unwrap();
+			let index = proposal_all.proposal_index;
+			let result = Self::vote_action(caller.clone(),candidate,approve);
+			
+
+			match result{
+				Ok(_) => {
+					let now = <frame_system::Pallet<T>>::block_number();
+					// deposit event
+					Self::deposit_event(Event::BackgroundCouncilVoted{
+						who: caller,
+						proposal_index: index,
+						when: now,
+						});
+					},
+				Err(e) => return Err(e),
+				}
+			
+
+			Ok(().into())
+		}
+
+		#[pallet::call_index(4)]
+		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1).ref_time())]
+		pub fn council_close(origin:OriginFor<T>,candidate:T::AccountId) -> DispatchResultWithPostInfo{
+			let caller = ensure_signed(origin)?;
+			let proposal_all = Self::get_proposal(&candidate).unwrap();
+			let index = proposal_all.proposal_index;
+			let result = Self::closing_vote(caller.clone(),candidate.clone());
+			
+
+			match result{
+				Ok(_) => {
+					let now = <frame_system::Pallet<T>>::block_number();
+
+			Self::deposit_event(Event::CouncilSessionClosed{
+				who: caller,
+				proposal_index: index,
+				when: now,
+			});
+				},
+				Err(e) => return Err(e),
+			}
+			
+			Ok(().into())
+		}
+
+		#[pallet::call_index(5)]
+		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1).ref_time())]
+		pub fn new_employee(origin:OriginFor<T>, candidate: T::AccountId,name: BoundedVecOf<T>) -> DispatchResultWithPostInfo{
+			let caller = ensure_signed(origin)?;
+			ensure!(
+				Coll::Pallet::<T, Instance1>::members().contains(&caller),
+				Error::<T>::NotACouncilMember
+			);
+			let now = <frame_system::Pallet<T>>::block_number();
+			let employee: Employee<T> = Employee::new(candidate,name.clone());
+
+			Self::deposit_event(Event::EmployeeCreated{
+				who: name,
+				when: now,
+			});
 
 
 			Ok(().into())
