@@ -179,7 +179,7 @@ pub mod pallet {
 		#[pallet::call_index(0)]
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1).ref_time())]
 		pub fn approve_skill(origin: OriginFor<T>, account: T::AccountId) -> DispatchResultWithPostInfo {
-			let _who = ensure_signed(origin)?;
+			let _who = T::CouncilOrigin::ensure_origin(origin)?;
 			ensure!(Self::employee(&account).is_some(), Error::<T>::NotAnEmployee);
 			let pending_skill = Self::get_pending_skills(&account);			
 			ensure!(pending_skill.is_some(), Error::<T>::NoSkillSubmited);

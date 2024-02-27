@@ -23,11 +23,17 @@ fn fast_forward_to(n: u64) {
 fn employee_test(){
     new_test_ext().execute_with(||{
 
+		let metadata0: BoundedVec<u8, <Test as Config>::StringLimit>=
+			b"Richard Geere".to_vec().try_into().unwrap();
+
+			let metadata1: BoundedVec<u8,<Test as Config>::StringLimit> =
+			b"Rust Programming".to_vec().try_into().unwrap();
+
         let council = Collective::members();
 		assert_eq!(council.len(),3);
 
         //create a new employee
-        assert_ok!(SkillsModule::new_employee(RuntimeOrigin::signed(council[0].clone()),RICHARD,bvec![0,0,3]));
+        assert_ok!(SkillsModule::new_employee(RuntimeOrigin::signed(council[0].clone()),RICHARD,metadata0));
 
         //Employee
     })

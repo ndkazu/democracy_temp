@@ -14,7 +14,7 @@ pub use frame_support::{
 };
 pub use sp_std::vec::Vec;
 pub use frame_system::{ensure_signed, ensure_root, pallet_prelude::*, RawOrigin};
-pub use scale_info::{prelude::vec, TypeInfo};
+pub use scale_info::{prelude::{vec,boxed::Box}, TypeInfo};
 pub use serde::{Deserialize, Serialize};
 use Coll::ProposalIndex;
 
