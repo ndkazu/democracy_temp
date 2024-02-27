@@ -16,6 +16,7 @@ pub use sp_std::vec::Vec;
 pub use frame_system::{ensure_signed, ensure_root, pallet_prelude::*, RawOrigin};
 pub use scale_info::{prelude::vec, TypeInfo};
 pub use serde::{Deserialize, Serialize};
+use Coll::ProposalIndex;
 
 pub type BalanceOf<T> =
 	<<T as pallet::Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
@@ -64,16 +65,14 @@ pub struct Skill<T: Config>{
 }
 
 impl<T:Config>Skill<T>{
-	pub fn new(metadata:BoundedVecOf<T>, skill_type: SkillFamily) -> Self{
+	pub fn new(metadata:BoundedVecOf<T>, skill_type: SkillFamily, by_who: T::AccountId) -> Self{
 		let creation_block = <frame_system::Pallet<T>>::block_number();
 		let skill_level = SkillLevel::default();
 		let skill_list:BoundedVec<Skill<T>,T::MaxSkills> = Skills::get();
 		let skill_number = skill_list.into_inner().len() as u8;
 		let new_skill = Skill{metadata,skill_type,creation_block,skill_level,confirmed:false,skill_number};
 
-		Skills::<T>::mutate(|list|{
-			list.try_push(new_skill.clone()).map_err(|_| "Max number of skills reached").ok();
-		});
+		SkillsApprovalList::<T>::insert(&by_who,new_skill.clone());
 
 		new_skill
 	}
@@ -104,12 +103,28 @@ impl<T:Config>Employee<T>{
 		new_employee
 
 	}
+
+	pub fn add_my_skill(account: T::AccountId, skill:Skill<T>) -> DispatchResult{
+		//make sure that the skill is in the skill_DB
+		let skills = Skills::<T>::get().into_inner();
+		let un_skills = UserUnverifiedSkills::<T>::get(&account).into_inner();
+		ensure!(skills.contains(&skill),Error::<T>::NotARecognizedSkill);
+		if !un_skills.contains(&skill){
+			UserUnverifiedSkills::<T>::mutate(account,|val|{
+				val.try_push(skill.clone()).map_err(|_| "Max number of skills reached").ok();
+			});
+		}
+
+		
+		Ok(()) 
+	}
 }
 
 #[derive(Clone, Encode, Decode, Default, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 #[scale_info(skip_type_params(T))]
 #[cfg_attr(feature = "std", derive(Debug))]
 pub struct SkillProposal<T: Config>{	
+	pub account:T::AccountId,
 	pub skill: Option<Skill<T>>,
 	pub creation_block: BlockNumberOf<T>,
 	pub proposal_hash: T::Hash,
@@ -118,3 +133,14 @@ pub struct SkillProposal<T: Config>{
 	pub approved: Approvals,
 }
 
+impl<T:Config>SkillProposal<T>{
+	pub fn new(account:T::AccountId,skill:Option<Skill<T>>, proposal: T::Hash) -> Self{
+		let now = <frame_system::Pallet<T>>::block_number();
+		let proposal_hash =  T::Hashing::hash_of(&proposal);
+		let proposal_index = ProposalsNumber::<T>::get();
+		ProposalsNumber::<T>::put(proposal_index+1);		
+		let proposal = SkillProposal {account,skill,creation_block:now,proposal_hash,proposal_index,session_closed:false,approved:Approvals::default()};
+		proposal
+
+	}
+}

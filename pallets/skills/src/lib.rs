@@ -13,6 +13,8 @@ pub mod weights;
 pub use weights::*;*/
 
 mod types;
+mod functions;
+pub use functions::*;
 pub use types::*;
 pub use pallet_collective as Coll;
 use Coll::Instance1;
@@ -58,25 +60,37 @@ pub mod pallet {
 		0
 	}
 
+	// Total number of Skill proposals
+	#[pallet::storage]
+	#[pallet::getter(fn proposals)]
+	pub type ProposalsNumber<T> = StorageValue<_, u32, ValueQuery, InitTotalMembers<T>>;
+
+
+	// Total number of employees
 	#[pallet::storage]
 	#[pallet::getter(fn employees_number)]
 	pub type EmployeesNumber<T> = StorageValue<_, u32, ValueQuery, InitTotalMembers<T>>;
 
+	//Verified user's skills
 	#[pallet::storage]
 	#[pallet::getter(fn user_ver_skills)]
 	pub type UserVerifiedSkills<T:Config> = 
 		StorageMap<_, Twox64Concat, AccountIdOf<T>,BoundedVec<Skill<T>,T::MaxSkills>,ValueQuery>;
 
+	//Unverified user's skills
 	#[pallet::storage]
 	#[pallet::getter(fn user_unv_skills)]
 	pub type UserUnverifiedSkills<T:Config> = 
 		StorageMap<_, Twox64Concat, AccountIdOf<T>,BoundedVec<Skill<T>,T::MaxSkills>,ValueQuery>;
 
+
+	//Employees database
 	#[pallet::storage]
 	#[pallet::getter(fn employee)]
 	pub type EmployeeLog<T:Config> = 
 		StorageMap<_, Twox64Concat, AccountIdOf<T>,Employee<T>,OptionQuery>;
 
+	
 	#[pallet::type_value]
 	/// Initializer for skills list
 	pub fn InitSkillList<T: Config>() -> BoundedVec<Skill<T>,T::MaxSkills> {
@@ -84,6 +98,7 @@ pub mod pallet {
 		BoundedVec::truncate_from(v0)
 	}
 
+	//Skills database
 	#[pallet::storage]
 	#[pallet::getter(fn skills)]
 	pub type Skills<T:Config> = StorageValue<_, BoundedVec<Skill<T>,T::MaxSkills>,ValueQuery,InitSkillList<T>>;
@@ -92,7 +107,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn get_pending_skills)]
 	pub type SkillsApprovalList<T: Config> =
-		StorageValue<_, BoundedVec<Skill<T>,T::MaxSkills>, ValueQuery,InitSkillList<T>>;
+	StorageMap<_, Twox64Concat, AccountIdOf<T>,Skill<T>,OptionQuery>;
 
 
 	// Pallets use events to inform users when important changes are made.
@@ -103,6 +118,10 @@ pub mod pallet {
 		/// Event documentation should end with an array that provides descriptive names for event
 		/// parameters. [something, who]
 		SomethingStored { something: u32, who: T::AccountId },
+		/// A new skill was added to the skill database
+		NewSkillCreated{when: BlockNumberFor<T>, what: BoundedVecOf<T> },
+		/// A skill creation was rejected
+		SkillCreationRejected { when: BlockNumberFor<T>, what: BoundedVecOf<T> },
 	}
 
 	// Errors inform users that something went wrong.
@@ -112,6 +131,12 @@ pub mod pallet {
 		NoneValue,
 		/// Errors should have helpful documentation associated with them.
 		StorageOverflow,
+		///This is not a recognized skill
+		NotARecognizedSkill,
+		///No skill submitted by this user
+		NoSkillSubmited,
+		///This account is not connected to an employee account
+		NotAnEmployee,
 	}
 
 	// Dispatchable functions allows users to interact with the pallet and invoke state changes.
@@ -119,43 +144,71 @@ pub mod pallet {
 	// Dispatchable functions must be annotated with a weight and must return a DispatchResult.
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		/// An example dispatchable that takes a singles value as a parameter, writes the value to
-		/// storage and emits an event. This function must be dispatched by a signed extrinsic.
+		/// New skill submission approval
 		#[pallet::call_index(0)]
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1).ref_time())]
-		pub fn do_something(origin: OriginFor<T>, something: u32) -> DispatchResult {
-			// Check that the extrinsic was signed and get the signer.
-			// This function will return an error if the extrinsic is not signed.
-			// https://docs.substrate.io/main-docs/build/origins/
-			let who = ensure_signed(origin)?;
+		pub fn approve_skill(origin: OriginFor<T>, account: T::AccountId) -> DispatchResultWithPostInfo {
+			let _who = ensure_signed(origin)?;
+			ensure!(Self::employee(&account).is_some(), Error::<T>::NotAnEmployee);
+			let pending_skill = Self::get_pending_skills(&account);			
+			ensure!(pending_skill.is_some(), Error::<T>::NoSkillSubmited);
+			let result = Self::approve_skill_helper(account);
+			let skill = pending_skill.unwrap();
+			match result{
+				Ok(_) => {
 
-			// Update storage.
-			<Something<T>>::put(something);
+					let now = <frame_system::Pallet<T>>::block_number();
+					Self::deposit_event(Event::NewSkillCreated{
+						when: now,
+						what: skill.metadata,
+					});
 
-			// Emit an event.
-			Self::deposit_event(Event::SomethingStored { something, who });
-			// Return a successful DispatchResultWithPostInfo
-			Ok(())
+				},
+				Err(e) => return Err(e),
+			}
+
+			Ok(().into())
 		}
 
 		/// An example dispatchable that may throw a custom error.
 		#[pallet::call_index(1)]
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1).ref_time())]
-		pub fn cause_error(origin: OriginFor<T>) -> DispatchResult {
+		pub fn reject_skill(origin: OriginFor<T>,account:T::AccountId) -> DispatchResultWithPostInfo {
 			let _who = ensure_signed(origin)?;
+			ensure!(Self::employee(&account).is_some(), Error::<T>::NotAnEmployee);
+			let pending_skill = Self::get_pending_skills(&account);			
+			ensure!(pending_skill.is_some(), Error::<T>::NoSkillSubmited);
+			let result = Self::reject_skill_helper(account);
+			let skill = pending_skill.unwrap();
+			match result{
+				Ok(_) => {
 
-			// Read a value from storage.
-			match <Something<T>>::get() {
-				// Return an error if the value has not been set.
-				None => return Err(Error::<T>::NoneValue.into()),
-				Some(old) => {
-					// Increment the value read from storage; will error in the event of overflow.
-					let new = old.checked_add(1).ok_or(Error::<T>::StorageOverflow)?;
-					// Update the value in storage with the incremented result.
-					<Something<T>>::put(new);
-					Ok(())
+					let now = <frame_system::Pallet<T>>::block_number();
+					Self::deposit_event(Event::SkillCreationRejected{
+						when: now,
+						what: skill.metadata,
+					});
+
 				},
+				Err(e) => return Err(e),
 			}
+
+			Ok(().into())
 		}
+
+		#[pallet::call_index(2)]
+		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1).ref_time())]
+		pub fn submit_skill(origin: OriginFor<T>,metadata:BoundedVecOf<T>, skill_type: SkillFamily) -> DispatchResultWithPostInfo {
+			let who = ensure_signed(origin)?;
+			ensure!(Self::employee(&who).is_some(), Error::<T>::NotAnEmployee);
+			//create new skill
+			let _skill:Skill<T> = Skill::new(metadata,skill_type,who);
+
+
+
+			Ok(().into())
+		}
+
+
 	}
 }
