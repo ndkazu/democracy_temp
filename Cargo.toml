@@ -1,6 +1,6 @@
 [workspace]
 members = [
-    "node", "pallets/skills",
+    "node", "pallets/market", "pallets/skills",
     "runtime",
 ]
 [profile.release]
