@@ -10,12 +10,16 @@ use sp_runtime::{
 	traits::{BlakeTwo256, IdentityLookup},
 	BuildStorage,	
 };
-use frame_system::EnsureRoot;
+use frame_system::{EnsureRoot, EventRecord, Phase};
 
 type Block = frame_system::mocking::MockBlock<Test>;
 type AccountId = AccountId32;
 type Balance = u128;
 pub type BlockNumber = u64;
+pub type Stype = pallet_skills::SkillFamily;
+pub type SLevel = pallet_skills::SkillLevel;
+pub type Sapproval = pallet_skills::Approvals;
+
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
@@ -38,7 +42,7 @@ fn default_max_proposal_weight() -> Weight {
 
 parameter_types! {
 	pub BlockWeights: frame_system::limits::BlockWeights =
-		frame_system::limits::BlockWeights::simple_max(Weight::from_parts(1024_u64, 0));
+		frame_system::limits::BlockWeights::simple_max(Weight::MAX);
 }
 
 #[derive_impl(frame_system::config_preludes::TestDefaultConfig as frame_system::DefaultConfig)]
@@ -145,6 +149,15 @@ pub const RICHARD: AccountId = AccountId::new([4u8; 32]);
 pub const DAVE: AccountId = AccountId::new([5u8; 32]);
 pub const EVE: AccountId = AccountId::new([6u8; 32]);
 pub const BSX: Balance = 100_000_000_000;
+
+pub fn expect_events(e: Vec<RuntimeEvent>) {
+	e.into_iter().for_each(frame_system::Pallet::<Test>::assert_has_event);
+}
+
+pub fn record(event: RuntimeEvent) -> EventRecord<RuntimeEvent, H256> {
+	EventRecord { phase: Phase::Initialization, event, topics: vec![] }
+}
+
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {

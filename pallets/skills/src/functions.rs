@@ -18,6 +18,12 @@ impl<T: Config> Pallet<T> {
                     list.try_push(sk.clone()).map_err(|_| "Max number of skills reached").ok();
                 });
 
+				SkillsProposalList::<T>::mutate(&from_who,|val|{
+					let mut proposal = val.clone().unwrap();
+					proposal.approved = Approvals::YES;
+					*val = Some(proposal);
+					});
+
                 //Remove skill from waiting list
                 SkillsApprovalList::<T>::remove(&from_who);
                 
@@ -41,6 +47,11 @@ impl<T: Config> Pallet<T> {
             //Check that account is an employee 
             if from_who==skill.0{
 
+				SkillsProposalList::<T>::mutate(&from_who,|val|{
+					let mut proposal = val.clone().unwrap();
+					proposal.approved = Approvals::NO;
+					*val = Some(proposal);
+					});
                 //Remove skill from waiting list
                 SkillsApprovalList::<T>::remove(&from_who);
                 
@@ -181,7 +192,7 @@ impl<T: Config> Pallet<T> {
 			for proposal_all in proposal_iter{
 				let test = (proposal_all.1.session_closed,proposal_all.1.approved); 
 				let prop = match test{
-					(true,Approvals::NO) => 0,
+					(true,Approvals::AWAITING) => 0,
 					(true,Approvals::YES) => 1,
 					_ => 2,
 				};

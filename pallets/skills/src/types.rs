@@ -16,7 +16,7 @@ pub use sp_std::vec::Vec;
 pub use frame_system::{ensure_signed, ensure_root, pallet_prelude::*, RawOrigin};
 pub use scale_info::{prelude::{vec,boxed::Box}, TypeInfo};
 pub use serde::{Deserialize, Serialize};
-use Coll::ProposalIndex;
+
 
 pub type BalanceOf<T> =
 	<<T as pallet::Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
@@ -52,9 +52,9 @@ pub enum SkillLevel{
     Level4,	
 }
 
-#[derive(Clone, Encode, Decode, Default, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
+#[derive(Clone, Encode, Decode, Default, PartialEq, Eq, TypeInfo, MaxEncodedLen,RuntimeDebugNoBound)]
 #[scale_info(skip_type_params(T))]
-#[cfg_attr(feature = "std", derive(Debug))]
+//#[cfg_attr(feature = "std", derive(Debug))]
 pub struct Skill<T: Config>{
 	pub metadata: BoundedVecOf<T>,
 	pub skill_type: SkillFamily,
@@ -65,9 +65,8 @@ pub struct Skill<T: Config>{
 }
 
 impl<T:Config>Skill<T>{
-	pub fn new(metadata:BoundedVecOf<T>, skill_type: SkillFamily, by_who: T::AccountId) -> Self{
+	pub fn new(metadata:BoundedVecOf<T>, skill_type: SkillFamily, by_who: T::AccountId,skill_level: SkillLevel) -> Self{
 		let creation_block = <frame_system::Pallet<T>>::block_number();
-		let skill_level = SkillLevel::default();
 		let skill_list:BoundedVec<Skill<T>,T::MaxSkills> = Skills::get();
 		let skill_number = skill_list.into_inner().len() as u8;
 		let new_skill = Skill{metadata,skill_type,creation_block,skill_level,confirmed:false,skill_number};
@@ -80,6 +79,7 @@ impl<T:Config>Skill<T>{
 
 #[derive(Clone, Encode, Decode, Default, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 #[scale_info(skip_type_params(T))]
+#[cfg_attr(feature = "std", derive(Debug))]
 pub struct Employee<T:Config>{
 	pub name: BoundedVecOf<T>,
 	pub uid: u32,
@@ -104,7 +104,7 @@ impl<T:Config>Employee<T>{
 
 	}
 
-	pub fn add_my_skill(account: T::AccountId, skill:Skill<T>) -> DispatchResult{
+	pub fn add_my_skill(account: T::AccountId, skill:&Skill<T>) -> DispatchResult{
 		//make sure that the skill is in the skill_DB
 		let skills = Skills::<T>::get().into_inner();
 		let un_skills = UserUnverifiedSkills::<T>::get(&account).into_inner();

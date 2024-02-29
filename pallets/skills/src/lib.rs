@@ -136,11 +136,13 @@ pub mod pallet {
 		/// A skill creation was rejected
 		SkillCreationRejected { when: BlockNumberFor<T>, what: BoundedVecOf<T> },
 		/// A member of the Background Council has voted
-		BackgroundCouncilVoted{who: T::AccountId, proposal_index: u32, when: BlockNumberOf<T>},
+		CouncilVoted{who: T::AccountId, proposal_index: u32, when: BlockNumberOf<T>},
 		/// A proposal has been closed by a Council member
 		CouncilSessionClosed{who: T::AccountId, proposal_index: u32, when: BlockNumberOf<T>},
 		/// A new employee was created
 		EmployeeCreated{who: BoundedVecOf<T>, when: BlockNumberOf<T>},
+		/// An Unverified skill was added to employee profile
+		UnverifiedSkillAdded{who: BoundedVecOf<T>, what: BoundedVecOf<T>, when: BlockNumberOf<T>},
 	}
 
 	// Errors inform users that something went wrong.
@@ -229,11 +231,11 @@ pub mod pallet {
 
 		#[pallet::call_index(2)]
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1).ref_time())]
-		pub fn submit_skill(origin: OriginFor<T>,metadata:BoundedVecOf<T>, skill_type: SkillFamily) -> DispatchResultWithPostInfo {
+		pub fn submit_skill(origin: OriginFor<T>,metadata:BoundedVecOf<T>, skill_type: SkillFamily, skill_level: SkillLevel) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			ensure!(Self::employee(&who).is_some(), Error::<T>::NotAnEmployee);
 			//create new skill
-			let skill:Skill<T> = Skill::new(metadata,skill_type,who.clone());
+			let skill:Skill<T> = Skill::new(metadata,skill_type,who.clone(),skill_level);
 
 			Self::start_council_session(who,skill).ok();
 
@@ -258,7 +260,7 @@ pub mod pallet {
 				Ok(_) => {
 					let now = <frame_system::Pallet<T>>::block_number();
 					// deposit event
-					Self::deposit_event(Event::BackgroundCouncilVoted{
+					Self::deposit_event(Event::CouncilVoted{
 						who: caller,
 						proposal_index: index,
 						when: now,
@@ -305,7 +307,7 @@ pub mod pallet {
 				Error::<T>::NotACouncilMember
 			);
 			let now = <frame_system::Pallet<T>>::block_number();
-			let employee: Employee<T> = Employee::new(candidate,name.clone());
+			let _employee: Employee<T> = Employee::new(candidate,name.clone());
 
 			Self::deposit_event(Event::EmployeeCreated{
 				who: name,
@@ -316,6 +318,24 @@ pub mod pallet {
 			Ok(().into())
 		}
 
+		#[pallet::call_index(6)]
+		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1).ref_time())]
+		pub fn add_my_skills(origin:OriginFor<T>, skill: Skill<T>) -> DispatchResultWithPostInfo{
+			let caller = ensure_signed(origin)?;
+			// Caller is an employee
+			ensure!(EmployeeLog::<T>::contains_key(&caller), Error::<T>::NotAnEmployee);
+			let employee = Self::employee(&caller).unwrap();
+			let now = <frame_system::Pallet<T>>::block_number();
+			Employee::<T>::add_my_skill(caller,&skill).ok();
+
+			Self::deposit_event(Event::UnverifiedSkillAdded{
+				who: employee.name,
+				what: skill.metadata,
+				when: now,
+			});
+
+			Ok(().into())
+		}
 
 	}
 }
