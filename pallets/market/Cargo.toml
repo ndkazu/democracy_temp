@@ -1,7 +1,7 @@
 [package]
 name = "pallet-market"
 version = "4.0.0-dev"
-description = "Skills management."
+description = "job Market place."
 authors = ["Kazunobu Ndong"]
 homepage = "https://github.com/ndkazu/democracy_temp"
 edition = "2021"
@@ -27,6 +27,8 @@ pallet-collective = { git = "https://github.com/paritytech/polkadot-sdk",branch 
 pallet-balances = {   default-features = false, git = "https://github.com/paritytech/polkadot-sdk",branch = "release-polkadot-v1.7.0" }
 pallet-sudo = {   default-features = false, git = "https://github.com/paritytech/polkadot-sdk",branch = "release-polkadot-v1.7.0" }
 pallet-bounties = {   default-features = false, git = "https://github.com/paritytech/polkadot-sdk",branch = "release-polkadot-v1.7.0" }
+pallet-treasury = {   default-features = false, git = "https://github.com/paritytech/polkadot-sdk",branch = "release-polkadot-v1.7.0" }
+pallet-skills = { default-features = false, path = "../skills"}
 
 [dev-dependencies]
 sp-core = { git = "https://github.com/paritytech/polkadot-sdk",branch = "release-polkadot-v1.7.0" }
@@ -47,6 +49,8 @@ std = [
 	"pallet-collective/std",
 	"pallet-sudo/std",
     "pallet-bounties/std",
+	"pallet-skills/std",
+	"pallet-treasury/std",
 ]
 runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks"]
 try-runtime = ["frame-support/try-runtime"]

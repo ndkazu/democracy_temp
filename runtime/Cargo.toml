@@ -76,6 +76,7 @@ frame-system-benchmarking = {  version = "28.0.0",  default-features = false,git
 
 # Local Dependencies
 pallet-skills = {  default-features = false, path = "../pallets/skills" }
+pallet-market = {  default-features = false, path = "../pallets/market" }
 
 [build-dependencies]
 substrate-wasm-builder = {git = "https://github.com/paritytech/polkadot-sdk", optional = true ,branch = "release-polkadot-v1.7.0" }
@@ -131,6 +132,7 @@ std = [
 	"sp-transaction-pool/std",
 	"sp-version/std",
 	"pallet-skills/std",
+	"pallet-market/std",
 	"pallet-assets/std",
 	"substrate-wasm-builder",
 ]
@@ -154,6 +156,7 @@ runtime-benchmarks = [
 	"pallet-timestamp/runtime-benchmarks",
 	"sp-runtime/runtime-benchmarks",
 	"pallet-skills/runtime-benchmarks",
+	"pallet-market/runtime-benchmarks",
 	"pallet-asset-tx-payment/runtime-benchmarks",
 	"pallet-assets/runtime-benchmarks",
 	"pallet-child-bounties/runtime-benchmarks",
@@ -182,6 +185,7 @@ try-runtime = [
 	"pallet-timestamp/try-runtime",
 	"pallet-transaction-payment/try-runtime",
 	"pallet-skills/try-runtime",
+	"pallet-market/try-runtime",
 	"pallet-asset-tx-payment/try-runtime",
 	"pallet-assets/try-runtime",
 	"pallet-child-bounties/try-runtime",

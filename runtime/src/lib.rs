@@ -77,6 +77,8 @@ pub use sp_runtime::BuildStorage;
 
 
 pub use pallet_skills;
+pub use pallet_market;
+
 
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -635,6 +637,11 @@ impl pallet_skills::Config for Runtime {
 
 }
 
+
+impl pallet_market::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+}
+
 parameter_types! {
 	pub const CouncilMotionDuration: BlockNumber = 5 * DAYS;
 	pub const CouncilMaxProposals: u32 = 100;
@@ -671,6 +678,7 @@ construct_runtime!(
 		TransactionPayment: pallet_transaction_payment,
 		Sudo: pallet_sudo,
 		SkillsModule: pallet_skills,
+		Market: pallet_market,
 		Treasury: pallet_treasury,
 		Bounties: pallet_bounties,
 		ChildBounties: pallet_child_bounties,
