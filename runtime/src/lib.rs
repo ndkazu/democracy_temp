@@ -96,6 +96,7 @@ pub type Nonce = u32;
 /// A hash of some data used by the chain.
 pub type Hash = sp_core::H256;
 
+
 type NegativeImbalance = <Balances as Currency<AccountId>>::NegativeImbalance;
 
 pub struct DealWithFees;
@@ -350,7 +351,8 @@ impl pallet_staking::BenchmarkingConfig for StakingBenchmarkingConfig {
 pub struct OnChainSeqPhragmen;
 parameter_types! {
 	
-	pub static ElectionsBounds: ElectionBounds = ElectionBoundsBuilder::default().build();
+	pub ElectionBoundsOnChain: ElectionBounds = ElectionBoundsBuilder::default()
+		.voters_count(5_000.into()).targets_count(1_250.into()).build();
 }
 
 impl onchain::Config for OnChainSeqPhragmen {
@@ -359,7 +361,7 @@ impl onchain::Config for OnChainSeqPhragmen {
 	type DataProvider = Staking;
 	type WeightInfo = ();
 	type MaxWinners = ConstU32<100>;
-	type Bounds = ElectionsBounds;
+	type Bounds = ElectionBoundsOnChain;
 }
 
 impl pallet_staking::Config for Runtime {
