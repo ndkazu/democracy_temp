@@ -37,6 +37,8 @@ pub mod impls;
 #[cfg(not(feature = "runtime-benchmarks"))]
 use impls::{Author, CreditToBlockAuthor};
 
+
+
 pub mod constants;
 pub use constants::{currency::*, time::*};
 use frame_support::{genesis_builder_helper::{build_config, create_default_config},
@@ -957,9 +959,11 @@ impl_runtime_apis! {
 		) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
 			use frame_benchmarking::{baseline, Benchmarking, BenchmarkBatch};
 			use sp_storage::TrackedStorageKey;
+			use pallet_session_benchmarking::Pallet as SessionBench;
 			use frame_system_benchmarking::Pallet as SystemBench;
 			use baseline::Pallet as BaselineBench;
 
+			impl pallet_session_benchmarking::Config for Runtime {}
 			impl frame_system_benchmarking::Config for Runtime {}
 			impl baseline::Config for Runtime {}
 
