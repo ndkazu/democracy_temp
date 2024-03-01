@@ -23,6 +23,17 @@ pub type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
 pub type BlockNumberOf<T> = BlockNumberFor<T>;
 pub type BoundedVecOf<T> = BoundedVec<u8, <T as SK::Config>::StringLimit>;
 
+#[derive(Clone, Encode, Decode, Default, PartialEq, Eq, TypeInfo, Copy, Serialize, Deserialize, MaxEncodedLen)]
+#[cfg_attr(feature = "std", derive(Debug))]
+pub enum TaskStatus{
+	Open,
+	InWork,
+	#[default]
+	CouncilReview,
+	Completed,
+
+}
+
 
 #[derive(Clone, Encode, Decode, Default, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 #[scale_info(skip_type_params(T))]
