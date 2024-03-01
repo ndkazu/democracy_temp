@@ -34,7 +34,6 @@ use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 
 pub mod impls;
-#[cfg(not(feature = "runtime-benchmarks"))]
 use impls::{Author, CreditToBlockAuthor};
 
 
