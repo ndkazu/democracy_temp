@@ -79,7 +79,7 @@ pub fn get_task_infos(account: T::AccountId) -> Option<(Bount::BountyIndex,TaskP
             }
             task0
 }
-/*
+
 
 pub fn vote_action(caller: T::AccountId,task_account: T::AccountId,approve:bool) -> DispatchResultWithPostInfo{
 		
@@ -88,15 +88,17 @@ pub fn vote_action(caller: T::AccountId,task_account: T::AccountId,approve:bool)
         Coll::Pallet::<T, Instance1>::members().contains(&caller),
         Error::<T>::NotACouncilMember
     );
+    let infos = Self::get_task_infos(task_account.clone()).unwrap();
     // Check that the proposal exists
     ensure!(
-        SkillsProposalList::<T>::contains_key(&candidate_account),
-        Error::<T>::ProposalDoesNotExist
+        TasksProposalList::<T>::contains_key(&task_account,infos.0),
+        Error::<T>::NotATaskProposal,
+
     );
-    let proposal_all = Self::get_proposal(candidate_account.clone()).unwrap();
+    let proposal_all = Self::get_proposal(task_account.clone(),infos.0).unwrap();
     let proposal_hash = proposal_all.proposal_hash;
     let proposal_index = proposal_all.proposal_index;
-    let origin = Self::get_origin(caller.clone());
+    let origin = SK::Pallet::<T>::get_origin(caller.clone());
     // Execute the council vote
     Coll::Pallet::<T, Instance1>::vote(
         origin,
@@ -108,7 +110,7 @@ pub fn vote_action(caller: T::AccountId,task_account: T::AccountId,approve:bool)
     Ok(().into())
 }
 
-pub fn closing_vote(caller: T::AccountId,candidate_account: T::AccountId) -> DispatchResultWithPostInfo{
+pub fn closing_vote(caller: T::AccountId,task_account: T::AccountId) -> DispatchResultWithPostInfo{
 
     // Check that the caller is a council member
     ensure!(
@@ -116,17 +118,20 @@ pub fn closing_vote(caller: T::AccountId,candidate_account: T::AccountId) -> Dis
         Error::<T>::NotACouncilMember
     );
     // Check that the proposal exists
+    let infos = Self::get_task_infos(task_account.clone()).unwrap();
+    // Check that the proposal exists
     ensure!(
-        SkillsProposalList::<T>::contains_key(&candidate_account),
-        Error::<T>::ProposalDoesNotExist
+        TasksProposalList::<T>::contains_key(&task_account,infos.0),
+        Error::<T>::NotATaskProposal,
+
     );
-    let proposal_all = Self::get_proposal(candidate_account.clone()).unwrap();
+    let proposal_all = Self::get_proposal(task_account.clone(),infos.0).unwrap();
     let proposal_hash = proposal_all.proposal_hash;
     let proposal = Coll::Pallet::<T,Instance1>::proposal_of(proposal_hash.clone()).unwrap();
     let proposal_len = proposal.clone().encoded_size();
     let index = proposal_all.proposal_index;
     let proposal_weight = proposal.get_dispatch_info().weight;
-    let origin = Self::get_origin(caller.clone());
+    let origin = SK::Pallet::<T>::get_origin(caller.clone());
     Coll::Pallet::<T,Instance1>::close(
         origin,
         proposal_hash,
@@ -135,7 +140,7 @@ pub fn closing_vote(caller: T::AccountId,candidate_account: T::AccountId) -> Dis
         proposal_len as u32,
     ).ok();
 
-    SkillsProposalList::<T>::mutate(&candidate_account,|val|{
+    TasksProposalList::<T>::mutate(&task_account,infos.0,|val|{
         let mut proposal = val.clone().unwrap();
         proposal.session_closed = true;
         *val = Some(proposal);
@@ -145,34 +150,36 @@ pub fn closing_vote(caller: T::AccountId,candidate_account: T::AccountId) -> Dis
 
 }
 
+
 pub fn begin_block(now: BlockNumberOf<T>) -> Weight{
     let max_block_weight = Weight::from_parts(1000_u64,0);
     if (now % T::CheckPeriod::get()).is_zero(){
-        let proposal_iter = SkillsProposalList::<T>::iter();
+        let proposal_iter = TasksProposalList::<T>::iter();
         for proposal_all in proposal_iter{
-            let test = (proposal_all.1.session_closed,proposal_all.1.approved); 
+            let test = (proposal_all.2.session_closed,proposal_all.2.approved); 
             let prop = match test{
-                (true,Approvals::AWAITING) => 0,
-                (true,Approvals::YES) => 1,
+                (true,SK::Approvals::AWAITING) => 0,
+                (true,SK::Approvals::YES) => 1,
                 _ => 2,
             };
             if prop == 0 {
-                let proposal = Call::<T>::reject_skill
+                let proposal = Call::<T>::reject_task
                 {
                     account: proposal_all.0.clone()
                 };
 
                 let council_member = Coll::Pallet::<T,Instance1>::members()[0].clone();
                 proposal.dispatch_bypass_filter(frame_system::RawOrigin::Signed(council_member).into()).ok();
-                SkillsProposalList::<T>::remove(&proposal_all.0.clone());
+                TasksProposalList::<T>::remove(&proposal_all.0.clone(),proposal_all.1);
             } else if prop == 1 {
-                SkillsProposalList::<T>::remove(&proposal_all.0);
+                
+                TasksProposalList::<T>::remove(&proposal_all.0,proposal_all.1);
             }
         }
         
     }
     max_block_weight
-}*/
+}
 
 
 }

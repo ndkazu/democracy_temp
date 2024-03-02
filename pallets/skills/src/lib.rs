@@ -15,7 +15,6 @@ pub use weights::*;*/
 
 mod types;
 mod functions;
-pub use functions::*;
 pub use types::*;
 pub use pallet_collective as Coll;
 use Coll::Instance1;

@@ -2,7 +2,7 @@ pub use super::*;
 //use frame_support::traits::fungibles::metadata;
 pub use frame_support::{
 	assert_ok,
-	dispatch::{DispatchResult},
+	
 	pallet_prelude::*,
 	sp_runtime::traits::{AccountIdConversion, Hash, Saturating, StaticLookup, Zero},
 	storage::{child,bounded_vec::BoundedVec},
@@ -17,7 +17,6 @@ pub use frame_system::{ensure_signed, ensure_root, pallet_prelude::*, RawOrigin}
 pub use scale_info::{prelude::{vec,boxed::Box}, TypeInfo};
 pub use serde::{Deserialize, Serialize};
 
-type AccountIdLookupOf<T> = <<T as frame_system::Config>::Lookup as StaticLookup>::Source;
 pub type BalanceOf<T> = Treasury::BalanceOf<T>;
 pub type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
 pub type BlockNumberOf<T> = BlockNumberFor<T>;

@@ -12,7 +12,6 @@ pub use pallet_bounties as Bount;
 pub use pallet_treasury as Treasury;
 mod types;
 mod functions;
-pub use functions::*;
 pub use types::*;
 /*
 #[cfg(test)]
@@ -30,8 +29,7 @@ pub use weights::*;
 pub mod pallet {
 	// Import various useful types required by all FRAME pallets.
 	use super::*;
-	use frame_support::pallet_prelude::*;
-	use frame_system::pallet_prelude::*;
+	
 
 
 	// The `Pallet` struct serves as a placeholder to implement traits, methods and dispatchables
@@ -223,7 +221,7 @@ pub mod pallet {
 		#[pallet::call_index(1)]
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1).ref_time())]
 		pub fn approve_task(origin: OriginFor<T>,account: T::AccountId) -> DispatchResult {
-			let _who = T::CouncilOrigin::ensure_origin(origin.clone())?;
+			let who = T::CouncilOrigin::ensure_origin(origin.clone())?;
 						
 			let task0 = Self::get_task_infos(account.clone()).unwrap();
 			let b_id =task0.0;
@@ -240,6 +238,7 @@ pub mod pallet {
 			
 
 			Bount::Pallet::<T>::approve_bounty(origin.clone(),b_id).ok();
+			 let who2 =T::SpendOrigin::ensure_origin(origin.clone());
 			Bount::Pallet::<T>::propose_curator(origin,b_id,T::Lookup::unlookup(cur),Zero::zero()).ok();
 			
 			Ok(())
@@ -280,7 +279,18 @@ pub mod pallet {
 			Ok(())
 		}
 
+		#[pallet::call_index(4)]
+		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1).ref_time())]
+		pub fn propose_curator(origin:OriginFor<T>, task_owner:T::AccountId) -> DispatchResult{
+			
+			Ok(())
+		}
 
+		#[pallet::call_index(5)]
+		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1).ref_time())]
+		pub fn accept_curator(origin:OriginFor<T>, task_owner:T::AccountId) -> DispatchResult{
+			Ok(())
+		}
 
 	}
 }
