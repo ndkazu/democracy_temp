@@ -641,6 +641,7 @@ impl pallet_skills::Config for Runtime {
 
 impl pallet_market::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
+	type RuntimeCall = RuntimeCall;
 }
 
 parameter_types! {

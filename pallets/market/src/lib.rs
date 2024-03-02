@@ -11,6 +11,8 @@ use Coll::Instance1;
 pub use pallet_bounties as Bount;
 pub use pallet_treasury as Treasury;
 mod types;
+mod functions;
+pub use functions::*;
 pub use types::*;
 /*
 #[cfg(test)]
@@ -31,6 +33,7 @@ pub mod pallet {
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
 
+
 	// The `Pallet` struct serves as a placeholder to implement traits, methods and dispatchables
 	// (`Call`s) in this pallet.
 	#[pallet::pallet]
@@ -50,6 +53,10 @@ pub mod pallet {
     +Treasury::Config {
 		/// The overarching runtime event type.
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
+		type RuntimeCall: Parameter
+			+ UnfilteredDispatchable<RuntimeOrigin = <Self as frame_system::Config>::RuntimeOrigin>
+			+ From<Call<Self>>
+			+ GetDispatchInfo;
 		
 	}
 
@@ -65,7 +72,20 @@ pub mod pallet {
     #[pallet::storage]
 	#[pallet::getter(fn get_proposal)]
 	pub type TasksProposalList<T: Config> =
-	StorageMap<_, Twox64Concat, AccountIdOf<T>,TaskProposal<T>,OptionQuery>;
+	StorageDoubleMap<
+		_, 
+		Blake2_128Concat, 
+		AccountIdOf<T>,
+		Blake2_128Concat,
+		Bount::BountyIndex,
+		TaskProposal<T>,
+		OptionQuery
+		>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn needed_skills)]
+	pub type TaskSkills<T: Config> =
+	StorageMap<_, Twox64Concat, Bount::BountyIndex,BoundedVec<SK::Skill<T>,T::MaxSkills>,ValueQuery>;
 
     #[pallet::type_value]
 	///Initializing function for the total number of employees
@@ -100,6 +120,12 @@ pub mod pallet {
 			/// The account who set the new value.
 			who: T::AccountId,
 		},
+		NeededSkillAdded{
+			what: BoundedVecOf<T>,
+			task: BoundedVecOf<T>,
+			by_who: BoundedVecOf<T>,
+			when: BlockNumberOf<T>,
+		}
 	}
 
 	/// Errors that can be returned by this pallet.
@@ -116,6 +142,9 @@ pub mod pallet {
 		NoneValue,
 		/// There was an attempt to increment the value in storage over `u32::MAX`.
 		StorageOverflow,
+		NotAnExistingTask,
+		NotAPendingTask,
+		NotATaskProposal,
 	}
 
 	/// The pallet's dispatchable functions ([`Call`]s).
@@ -139,51 +168,108 @@ pub mod pallet {
 		/// error if it isn't. Learn more about origins here: <https://docs.substrate.io/build/origins/>
 		#[pallet::call_index(0)]
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1).ref_time())]
-		pub fn do_something(origin: OriginFor<T>, something: u32) -> DispatchResult {
+		pub fn additional_task_skills(origin: OriginFor<T>,task_id:Bount::BountyIndex, skill:SK::Skill<T>) -> DispatchResult {
 			// Check that the extrinsic was signed and get the signer.
 			let who = ensure_signed(origin)?;
 
-			// Update storage.
-			Something::<T>::put(something);
+			//Origin is an employee
+			ensure!(SK::Pallet::<T>::employee(&who).is_some(), SK::Error::<T>::NotAnEmployee);
+			
+			//Proposal exists
+			ensure!(TasksProposalList::<T>::contains_key(&who,task_id),Error::<T>::NotATaskProposal);
+			
+			//Task exists
+			let bounty = Bount::Pallet::<T>::bounties(task_id);
+			ensure!(bounty.is_some(), Error::<T>::NotAnExistingTask);
+			let status = bounty.unwrap().get_status();
+			ensure!(status==Bount::BountyStatus::Proposed, Error::<T>::NotAPendingTask);
+
+
+			//add skill to task list, and update proposal task_listy
+			TaskSkills::<T>::mutate(task_id,|list|{
+				list.try_push(skill.clone()).map_err(|_| "Max number of skills reached").ok();
+			});
+			let needed_skills = Self::needed_skills(task_id);
+			let mut proposal = Self::get_proposal(&who,task_id).unwrap();
+			proposal.needed_skills =needed_skills;
+
+		TasksProposalList::<T>::mutate(who.clone(),task_id,|val|{
+			*val = Some(proposal.clone());
+		});
+
 
 			// Emit an event.
-			Self::deposit_event(Event::SomethingStored { something, who });
+			let when =  <frame_system::Pallet<T>>::block_number();
+			let what = skill.metadata;
+			let task = proposal.description;
+			let employee = SK::Pallet::<T>::employee(&who).unwrap();
+			let by_who = employee.name;
+
+			Self::deposit_event(Event::NeededSkillAdded{
+				what,
+				task,
+				by_who,
+				when
+			});
+
+
+			//Self::deposit_event(Event::SomethingStored { something, who });
 
 			// Return a successful `DispatchResult`
 			Ok(())
 		}
 
-		/// An example dispatchable that may throw a custom error.
-		///
-		/// It checks that the caller is a signed origin and reads the current value from the
-		/// `Something` storage item. If a current value exists, it is incremented by 1 and then
-		/// written back to storage.
-		///
-		/// ## Errors
-		///
-		/// The function will return an error under the following conditions:
-		///
-		/// - If no value has been set ([`Error::NoneValue`])
-		/// - If incrementing the value in storage causes an arithmetic overflow
-		///   ([`Error::StorageOverflow`])
 		#[pallet::call_index(1)]
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1).ref_time())]
-		pub fn cause_error(origin: OriginFor<T>) -> DispatchResult {
-			let _who = ensure_signed(origin)?;
-
-			// Read a value from storage.
-			match Pallet::<T>::something() {
-				// Return an error if the value has not been set.
-				None => Err(Error::<T>::NoneValue.into()),
-				Some(old) => {
-					// Increment the value read from storage. This will cause an error in the event
-					// of overflow.
-					let new = old.checked_add(1).ok_or(Error::<T>::StorageOverflow)?;
-					// Update the value in storage with the incremented result.
-					Something::<T>::put(new);
-					Ok(())
-				},
+		pub fn approve_task(origin: OriginFor<T>,account: T::AccountId) -> DispatchResult {
+			let _who = T::CouncilOrigin::ensure_origin(origin.clone())?;
+			let task_iter = TasksProposalList::<T>::iter();
+			let mut b_id = 0;
+			let mut cur=account.clone();
+			for task in task_iter{
+				let acc = task.0;
+				if acc == account{
+					b_id = task.1;
+					cur = task.2.curator;
+					
+					
+				}
 			}
+			
+
+			//Assess that the id is linked to a created bounty, not yet approved
+			let bounty = Bount::Pallet::<T>::bounties(b_id);
+			ensure!(bounty.is_some(), Error::<T>::NotAnExistingTask);
+
+			//Assess that task status is 'awaiting for approval'
+			let status = bounty.unwrap().get_status();
+			ensure!(status==Bount::BountyStatus::Proposed, Error::<T>::NotAPendingTask);
+
+			
+
+			Bount::Pallet::<T>::approve_bounty(origin.clone(),b_id).ok();
+			Bount::Pallet::<T>::propose_curator(origin,b_id,T::Lookup::unlookup(cur),Zero::zero()).ok();
+			
+			Ok(())
 		}
+
+		#[pallet::call_index(2)]
+		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1).ref_time())]
+		pub fn propose_task(origin: OriginFor<T>, skill:SK::Skill<T>, value:BalanceOf<T>,description:BoundedVecOf<T>, curator:T::AccountId) -> DispatchResult{
+
+			// Check that the extrinsic was signed and get the signer.
+			let who = ensure_signed(origin.clone())?;
+			//Origin is an employee
+			ensure!(SK::Pallet::<T>::employee(&who).is_some(), SK::Error::<T>::NotAnEmployee);
+			
+			//propose the bounty
+			Bount::Pallet::<T>::propose_bounty(origin.clone(),value,description.clone().into_inner()).ok();
+			
+			//start the council session
+			Self::start_task_session(who,curator,description,value,skill).ok();
+
+			Ok(())
+		}
+
 	}
 }
