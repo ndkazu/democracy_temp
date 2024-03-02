@@ -145,6 +145,7 @@ pub mod pallet {
 		NotAnExistingTask,
 		NotAPendingTask,
 		NotATaskProposal,
+		NotACouncilMember,
 	}
 
 	/// The pallet's dispatchable functions ([`Call`]s).
@@ -223,20 +224,11 @@ pub mod pallet {
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1).ref_time())]
 		pub fn approve_task(origin: OriginFor<T>,account: T::AccountId) -> DispatchResult {
 			let _who = T::CouncilOrigin::ensure_origin(origin.clone())?;
-			let task_iter = TasksProposalList::<T>::iter();
-			let mut b_id = 0;
-			let mut cur=account.clone();
-			for task in task_iter{
-				let acc = task.0;
-				if acc == account{
-					b_id = task.1;
-					cur = task.2.curator;
-					
-					
-				}
-			}
-			
-
+						
+			let task0 = Self::get_task_infos(account.clone()).unwrap();
+			let b_id =task0.0;
+			let cur = task0.1.curator;
+		
 			//Assess that the id is linked to a created bounty, not yet approved
 			let bounty = Bount::Pallet::<T>::bounties(b_id);
 			ensure!(bounty.is_some(), Error::<T>::NotAnExistingTask);
@@ -255,6 +247,23 @@ pub mod pallet {
 
 		#[pallet::call_index(2)]
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1).ref_time())]
+		pub fn reject_task(origin: OriginFor<T>, account: T::AccountId) -> DispatchResult{
+			let _caller = T::RejectOrigin::ensure_origin(origin.clone());
+			
+			
+			let task0 = Self::get_task_infos(account.clone()).unwrap();
+			let b_id =task0.0;		
+
+			//Assess that the id is linked to a created bounty, not yet approved
+			let bounty = Bount::Pallet::<T>::bounties(b_id);
+			ensure!(bounty.is_some(), Error::<T>::NotAnExistingTask);
+			Bount::Pallet::<T>::close_bounty(origin,b_id).ok();
+
+			Ok(())
+		}
+
+		#[pallet::call_index(3)]
+		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1).ref_time())]
 		pub fn propose_task(origin: OriginFor<T>, skill:SK::Skill<T>, value:BalanceOf<T>,description:BoundedVecOf<T>, curator:T::AccountId) -> DispatchResult{
 
 			// Check that the extrinsic was signed and get the signer.
@@ -270,6 +279,8 @@ pub mod pallet {
 
 			Ok(())
 		}
+
+
 
 	}
 }
