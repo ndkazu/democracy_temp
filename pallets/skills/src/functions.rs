@@ -12,6 +12,7 @@ impl<T: Config> Pallet<T> {
             if from_who==skill.0{
                 let mut sk = skill.1.clone();
                 sk.skill_number=Self::skills().into_inner().len() as u8;
+				sk.confirmed=true;
 
                 //Add skill to skill database
                 Skills::<T>::mutate(|list|{
@@ -184,6 +185,8 @@ impl<T: Config> Pallet<T> {
 		Ok(().into())
 
 	}
+
+	
 
     pub fn begin_block(now: BlockNumberOf<T>) -> Weight{
 		let max_block_weight = Weight::from_parts(1000_u64,0);

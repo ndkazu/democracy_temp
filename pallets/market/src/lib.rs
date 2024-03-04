@@ -55,6 +55,12 @@ pub mod pallet {
 			+ UnfilteredDispatchable<RuntimeOrigin = <Self as frame_system::Config>::RuntimeOrigin>
 			+ From<Call<Self>>
 			+ GetDispatchInfo;
+		#[pallet::constant]
+		type Sp: Get<u32>;
+
+		#[pallet::constant]
+		type Xp: Get<u32>;
+
 		
 	}
 
@@ -84,6 +90,13 @@ pub mod pallet {
 	#[pallet::getter(fn needed_skills)]
 	pub type TaskSkills<T: Config> =
 	StorageMap<_, Twox64Concat, Bount::BountyIndex,BoundedVec<SK::Skill<T>,T::MaxSkills>,ValueQuery>;
+
+
+	#[pallet::storage]
+	#[pallet::getter(fn worker)]
+	pub type TaskWorker<T: Config> =
+	StorageMap<_, Twox64Concat, T::AccountId,BoundedVec<u32,T::MaxSkills>,ValueQuery>;
+
 
     #[pallet::type_value]
 	///Initializing function for the total number of employees
@@ -159,6 +172,12 @@ pub mod pallet {
 
 		/// This operation is not permitted for your account
 		NotPermitted,
+
+		/// This task has been picked up by another employee
+		AlreadyPickedUpByX,
+
+		/// Employee already working on task
+		AlreadyPickedUpByYou
 	}
 
 	#[pallet::hooks]
@@ -388,6 +407,36 @@ pub mod pallet {
 			
 			Ok(().into())
 		}
+
+		#[pallet::call_index(8)]
+		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1).ref_time())]
+		pub fn pick_task(origin:OriginFor<T>, task_owner:T::AccountId) -> DispatchResultWithPostInfo{
+			let caller = ensure_signed(origin)?;
+			let worker_list = Some(Self::worker(caller.clone()));
+			let task_infos = Self::get_task_infos(task_owner).unwrap();
+			let b_id = task_infos.0;
+			
+			//Employee is already working on the task
+			if worker_list.is_some(){
+				let list = worker_list.unwrap().into_inner();
+				
+				ensure!(!list.contains(&b_id), Error::<T>::AlreadyPickedUpByYou);
+				TaskWorker::<T>::mutate(caller.clone(),|list|{
+					list.try_push(b_id).map_err(|_| "Max number of skills reached").ok();
+				});
+				
+			} else{
+				let v0 = vec![b_id];
+
+				TaskWorker::<T>::insert(caller,BoundedVec::truncate_from(v0));
+			}
+			
+			
+
+			Ok(().into())
+		}
+
+		//Still need to upgrade the employee when calling award_bounty from the pallet_bounties
 
 	}
 }

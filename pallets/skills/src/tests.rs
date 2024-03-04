@@ -65,7 +65,7 @@ fn employee_test(){
 		let skill0 = skill.clone()[0].clone();
 
 
-		assert_ok!(SkillsModule::add_my_skills(RuntimeOrigin::signed(RICHARD), skill0.clone()));
+		assert_ok!(SkillsModule::add_my_skills(RuntimeOrigin::signed(RICHARD), 0));
 		assert_eq!(SkillsModule::user_unv_skills(RICHARD).into_inner()[0].clone(), skill0)
 		
     })

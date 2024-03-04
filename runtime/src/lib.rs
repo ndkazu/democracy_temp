@@ -367,9 +367,17 @@ impl pallet_skills::Config for Runtime {
 }
 
 
+parameter_types!{
+	//Every sp increase with an amount equal to xp_bonus, trigger 
+	pub const xp_bonus: u32 = 1;
+	pub const sp_trigger:u32 = 5;
+	
+}
 impl pallet_market::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type RuntimeCall = RuntimeCall;
+	type Sp = sp_trigger;
+	type Xp = xp_bonus;
 }
 
 parameter_types! {
@@ -449,6 +457,13 @@ impl pallet_indices::Config for Runtime {
 	type WeightInfo = pallet_indices::weights::SubstrateWeight<Runtime>;
 }
 
+impl pallet_utility::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type RuntimeCall = RuntimeCall;
+	type PalletsOrigin = OriginCaller;
+	type WeightInfo = pallet_utility::weights::SubstrateWeight<Runtime>;
+}
+
 
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
@@ -470,6 +485,7 @@ construct_runtime!(
 		Indices: pallet_indices,
 		AssetRate: pallet_asset_rate,
 		Assets: pallet_assets,
+		Utility: pallet_utility,
 	}
 );
 
@@ -523,6 +539,7 @@ mod benches {
 		[pallet_treasury, Treasury]
 		[pallet_bounties, Bounties]
 		[pallet_child_bounties, ChildBounties]
+		[pallet_utility, Utility]
 	);
 }
 

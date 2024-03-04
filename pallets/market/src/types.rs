@@ -21,6 +21,7 @@ pub type BalanceOf<T> = Treasury::BalanceOf<T>;
 pub type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
 pub type BlockNumberOf<T> = BlockNumberFor<T>;
 pub type BoundedVecOf<T> = BoundedVec<u8, <T as SK::Config>::StringLimit>;
+pub type Level = SK::SkillLevel;
 
 #[derive(Clone, Encode, Decode, Default, PartialEq, Eq, TypeInfo, Copy, Serialize, Deserialize, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Debug))]

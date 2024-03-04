@@ -150,6 +150,63 @@ pub fn closing_vote(caller: T::AccountId,task_account: T::AccountId) -> Dispatch
 
 }
 
+pub fn calculate_sp(skill_level: Level) -> u32{
+    let sp = match skill_level {
+        Level::Level1 => 1,
+        Level::Level2 => 2,
+        Level::Level3 => 3,
+        Level::Level4 => 4,
+    };
+    sp
+}
+
+pub fn upgrade_employee(account: T::AccountId,task_owner: T::AccountId) -> DispatchResultWithPostInfo{
+    let task = Self::get_task_infos(task_owner).unwrap();
+    let needed_skills = Self::needed_skills(task.0).into_inner();
+    let mut employee = SK::Pallet::<T>::employee(account.clone()).unwrap();
+    let employee_skills_unv = SK::Pallet::<T>::user_unv_skills(&account).into_inner();
+    let employee_ver_skills = SK::Pallet::<T>::user_ver_skills(&account).into_inner();
+    let old_sp = employee.sp;
+    let old_xp = employee.xp;
+    for sk in needed_skills{
+        //Upgrade Employee SP
+        let add_sp = Self::calculate_sp(sk.skill_level);
+        employee.sp = old_sp.saturating_add(add_sp);
+
+        if !employee_ver_skills.contains(&sk){
+            //move skill from unverified to verified
+            let index = employee_skills_unv.iter().position(|r| *r==sk).unwrap();
+            SK::UserUnverifiedSkills::mutate(account.clone(),|list: &mut pallet_skills::BoundedVec<SK::Skill<T>, _>|{
+                list.remove(index);
+            });
+            let test = employee_skills_unv.contains(&sk);
+            match test{
+                true => {
+                    SK::UserVerifiedSkills::mutate(account.clone(),|list: &mut pallet_skills::BoundedVec<SK::Skill<T>, _>|{
+                        list.try_push(sk.clone()).map_err(|_| "Max number of skills reached").ok();
+                    });
+                },
+                false => ()
+            }
+           
+        }
+
+    }
+
+    //Upgrade employee xp
+    let sp = T::Sp::get();
+    let xp = T::Xp::get();
+   if employee.sp>old_sp && employee.sp % sp==0{
+    employee.xp = old_xp.saturating_add(xp);
+   }
+
+   SK::EmployeeLog::<T>::mutate(account.clone(),|val|{
+    *val = Some(employee);
+   });
+
+    Ok(().into())
+}
+
 
 pub fn begin_block(now: BlockNumberOf<T>) -> Weight{
     let max_block_weight = Weight::from_parts(1000_u64,0);

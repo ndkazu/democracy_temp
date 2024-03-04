@@ -319,17 +319,18 @@ pub mod pallet {
 
 		#[pallet::call_index(6)]
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1).ref_time())]
-		pub fn add_my_skills(origin:OriginFor<T>, skill: Skill<T>) -> DispatchResultWithPostInfo{
+		pub fn add_my_skills(origin:OriginFor<T>, skill_number: u32) -> DispatchResultWithPostInfo{
 			let caller = ensure_signed(origin)?;
 			// Caller is an employee
 			ensure!(EmployeeLog::<T>::contains_key(&caller), Error::<T>::NotAnEmployee);
 			let employee = Self::employee(&caller).unwrap();
 			let now = <frame_system::Pallet<T>>::block_number();
+			let skill = &Self::skills().into_inner()[skill_number as usize];
 			Employee::<T>::add_my_skill(caller,&skill).ok();
 
 			Self::deposit_event(Event::UnverifiedSkillAdded{
 				who: employee.name,
-				what: skill.metadata,
+				what: skill.metadata.clone(),
 				when: now,
 			});
 
