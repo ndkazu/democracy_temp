@@ -48,7 +48,7 @@ pub mod pallet {
     + Coll::Config<Instance1>
     + SK::Config
     + Bount::Config
-    +Treasury::Config {
+    + Treasury::Config {
 		/// The overarching runtime event type.
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 		type RuntimeCall: Parameter
@@ -123,7 +123,11 @@ pub mod pallet {
 			task: BoundedVecOf<T>,
 			by_who: BoundedVecOf<T>,
 			when: BlockNumberOf<T>,
-		}
+		},
+		/// A member of the Background Council has voted
+		CouncilVoted{who: T::AccountId, proposal_index: u32, when: BlockNumberOf<T>},
+		/// A proposal has been closed by a Council member
+		CouncilSessionClosed{who: T::AccountId, proposal_index: u32, when: BlockNumberOf<T>},
 	}
 
 	/// Errors that can be returned by this pallet.
@@ -140,10 +144,29 @@ pub mod pallet {
 		NoneValue,
 		/// There was an attempt to increment the value in storage over `u32::MAX`.
 		StorageOverflow,
+
+		/// Task not created
 		NotAnExistingTask,
+
+		/// This does not correspond to a created task
 		NotAPendingTask,
+
+		/// This task proposal does not exists
 		NotATaskProposal,
+
+		/// The account does not belong to a Council member
 		NotACouncilMember,
+
+		/// This operation is not permitted for your account
+		NotPermitted,
+	}
+
+	#[pallet::hooks]
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+		/// Weight: see `begin_block`
+		fn on_initialize(n: BlockNumberFor<T>) -> Weight {
+			Self::begin_block(n)
+		}
 	}
 
 	/// The pallet's dispatchable functions ([`Call`]s).
@@ -181,7 +204,7 @@ pub mod pallet {
 			let bounty = Bount::Pallet::<T>::bounties(task_id);
 			ensure!(bounty.is_some(), Error::<T>::NotAnExistingTask);
 			let status = bounty.unwrap().get_status();
-			ensure!(status==Bount::BountyStatus::Proposed, Error::<T>::NotAPendingTask);
+			ensure!(status==Bount::BountyStatus::Approved||status==Bount::BountyStatus::Funded||status==Bount::BountyStatus::Proposed, Error::<T>::NotAPendingTask);
 
 
 			//add skill to task list, and update proposal task_listy
@@ -221,11 +244,10 @@ pub mod pallet {
 		#[pallet::call_index(1)]
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1).ref_time())]
 		pub fn approve_task(origin: OriginFor<T>,account: T::AccountId) -> DispatchResult {
-			let who = T::CouncilOrigin::ensure_origin(origin.clone())?;
+			let _who = T::CouncilOrigin::ensure_origin(origin.clone())?;
 						
 			let task0 = Self::get_task_infos(account.clone()).unwrap();
 			let b_id =task0.0;
-			let cur = task0.1.curator;
 		
 			//Assess that the id is linked to a created bounty, not yet approved
 			let bounty = Bount::Pallet::<T>::bounties(b_id);
@@ -234,12 +256,8 @@ pub mod pallet {
 			//Assess that task status is 'awaiting for approval'
 			let status = bounty.unwrap().get_status();
 			ensure!(status==Bount::BountyStatus::Proposed, Error::<T>::NotAPendingTask);
-
-			
-
+	
 			Bount::Pallet::<T>::approve_bounty(origin.clone(),b_id).ok();
-			 let who2 =T::SpendOrigin::ensure_origin(origin.clone());
-			Bount::Pallet::<T>::propose_curator(origin,b_id,T::Lookup::unlookup(cur),Zero::zero()).ok();
 			
 			Ok(())
 		}
@@ -282,6 +300,12 @@ pub mod pallet {
 		#[pallet::call_index(4)]
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1).ref_time())]
 		pub fn propose_curator(origin:OriginFor<T>, task_owner:T::AccountId) -> DispatchResult{
+			let _caller = T::SpendOrigin::ensure_origin(origin.clone())?;
+			let task0 = Self::get_task_infos(task_owner.clone()).unwrap();
+			let b_id =task0.0;
+			let cur = task0.1.curator;
+
+			Bount::Pallet::<T>::propose_curator(origin,b_id,T::Lookup::unlookup(cur),Zero::zero()).ok();
 			
 			Ok(())
 		}
@@ -289,7 +313,80 @@ pub mod pallet {
 		#[pallet::call_index(5)]
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1).ref_time())]
 		pub fn accept_curator(origin:OriginFor<T>, task_owner:T::AccountId) -> DispatchResult{
+			let who = ensure_signed(origin.clone())?;
+			let task0 = Self::get_task_infos(task_owner.clone()).unwrap();
+			let b_id =task0.0;
+			let cur = task0.1.curator;
+			//Proposal status is Approved
+			let bounty = Bount::Pallet::<T>::bounties(b_id).unwrap();
+			let bounty_status = bounty.get_status();
+			ensure!(bounty_status == Bount::BountyStatus::CuratorProposed{curator: cur.clone()}, Error::<T>::NotPermitted);
+
+			ensure!(who==cur,Error::<T>::NotPermitted);
+			Bount::Pallet::<T>::accept_curator(origin,b_id).ok();
+
 			Ok(())
+		}
+
+		#[pallet::call_index(6)]
+		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1).ref_time())]
+		pub fn council_vote(origin:OriginFor<T>,task_owner:T::AccountId,approve:bool) -> DispatchResultWithPostInfo {
+			let caller = ensure_signed(origin)?;
+			ensure!(
+				Coll::Pallet::<T, Instance1>::members().contains(&caller),
+				Error::<T>::NotACouncilMember
+			);
+			let task0 = Self::get_task_infos(task_owner.clone().clone()).unwrap();
+			let b_id = task0.0;
+			let proposal_all = Self::get_proposal(&task_owner,b_id).unwrap();
+			let index = proposal_all.proposal_index;
+			let result = Self::vote_action(caller.clone(),task_owner,approve);
+			
+
+			match result{
+				Ok(_) => {
+					let now = <frame_system::Pallet<T>>::block_number();
+					// deposit event
+					Self::deposit_event(Event::CouncilVoted{
+						who: caller,
+						proposal_index: index,
+						when: now,
+						});
+					},
+				Err(e) => return Err(e),
+				}
+			
+
+			Ok(().into())
+		}
+
+		
+		#[pallet::call_index(7)]
+		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1).ref_time())]
+		pub fn council_close(origin:OriginFor<T>,task_owner:T::AccountId) -> DispatchResultWithPostInfo{
+			let caller = ensure_signed(origin)?;
+
+			let task0 = Self::get_task_infos(task_owner.clone().clone()).unwrap();
+			let b_id = task0.0;
+			let proposal_all = Self::get_proposal(&task_owner,b_id).unwrap();
+			let index = proposal_all.proposal_index;
+			let result = Self::closing_vote(caller.clone(),task_owner.clone());
+			
+
+			match result{
+				Ok(_) => {
+					let now = <frame_system::Pallet<T>>::block_number();
+
+			Self::deposit_event(Event::CouncilSessionClosed{
+				who: caller,
+				proposal_index: index,
+				when: now,
+			});
+				},
+				Err(e) => return Err(e),
+			}
+			
+			Ok(().into())
 		}
 
 	}
