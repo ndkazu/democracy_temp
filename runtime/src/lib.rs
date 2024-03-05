@@ -540,6 +540,10 @@ mod benches {
 		[pallet_bounties, Bounties]
 		[pallet_child_bounties, ChildBounties]
 		[pallet_utility, Utility]
+		[pallet_asset_rate, AssetRate]
+		[pallet_assets, Assets]
+		[pallet_indices, Indices]
+
 	);
 }
 

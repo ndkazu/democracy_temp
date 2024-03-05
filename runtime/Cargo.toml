@@ -137,6 +137,9 @@ runtime-benchmarks = [
 	"pallet-child-bounties/runtime-benchmarks",
 	"pallet-indices/runtime-benchmarks",
 	"pallet-utility/runtime-benchmarks",
+	"pallet-assets/runtime-benchmarks",
+	"pallet-asset-rate/runtime-benchmarks",
+	"pallet-indices/runtime-benchmarks",
 ]
 try-runtime = [
 	"frame-try-runtime/try-runtime",
@@ -159,6 +162,9 @@ try-runtime = [
 	"pallet-child-bounties/try-runtime",
 	"pallet-indices/try-runtime",
 	"pallet-utility/try-runtime",
+	"pallet-assets/try-runtime",
+	"pallet-asset-rate/try-runtime",
+	"pallet-indices/try-runtime",
 	
 	
 ]

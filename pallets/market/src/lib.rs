@@ -438,5 +438,18 @@ pub mod pallet {
 
 		//Still need to upgrade the employee when calling award_bounty from the pallet_bounties
 
+		#[pallet::call_index(9)]
+		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1).ref_time())]
+		pub fn worker_claims_reward(origin: OriginFor<T>, task_owner:T::AccountId) -> DispatchResultWithPostInfo{
+
+			Ok(().into())
+		}
+
+		#[pallet::call_index(10)]
+		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1).ref_time())]
+		pub fn curator_rewards_worker(origin: OriginFor<T>, task_owner:T::AccountId, task_worker:T::AccountId) -> DispatchResultWithPostInfo{
+
+			Ok(().into())
+		}
 	}
 }
