@@ -10,7 +10,7 @@ pub fn start_task_session(account:T::AccountId,curator:T::AccountId, description
     //Create proposal
     let proposal0 = 
     Call::<T>::approve_task{
-        account: account.clone()
+        task_owner: account.clone()
     };
     let proposal0 = Self::get_formatted_call(proposal0.into());
     let proposal = proposal0.unwrap();
@@ -222,7 +222,7 @@ pub fn begin_block(now: BlockNumberOf<T>) -> Weight{
             if prop == 0 {
                 let proposal = Call::<T>::reject_task
                 {
-                    account: proposal_all.0.clone()
+                    task_owner: proposal_all.0.clone()
                 };
 
                 let council_member = Coll::Pallet::<T,Instance1>::members()[0].clone();

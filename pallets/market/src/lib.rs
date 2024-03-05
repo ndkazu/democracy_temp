@@ -73,6 +73,7 @@ pub mod pallet {
 	#[pallet::getter(fn something)]
 	pub type Something<T> = StorageValue<_, u32>;
 
+	/// (task_owner,task_id,task_proposal)
     #[pallet::storage]
 	#[pallet::getter(fn get_proposal)]
 	pub type TasksProposalList<T: Config> =
@@ -86,12 +87,20 @@ pub mod pallet {
 		OptionQuery
 		>;
 
+	/// (task_id,BoudedVec<skills>)
 	#[pallet::storage]
 	#[pallet::getter(fn needed_skills)]
 	pub type TaskSkills<T: Config> =
 	StorageMap<_, Twox64Concat, Bount::BountyIndex,BoundedVec<SK::Skill<T>,T::MaxSkills>,ValueQuery>;
 
+	/// (task_owner, task_status)
+	#[pallet::storage]
+	#[pallet::getter(fn status)]
+	pub type TaskStat<T: Config> =
+	StorageMap<_, Twox64Concat, T::AccountId,Status<T>,OptionQuery>;
 
+
+	/// (task_worker,BoundedVec<task_id>)
 	#[pallet::storage]
 	#[pallet::getter(fn worker)]
 	pub type TaskWorker<T: Config> =
@@ -104,10 +113,13 @@ pub mod pallet {
 		0
 	}
 
-	// Total number of Skill proposals
+	/// Total number of Skill proposals
 	#[pallet::storage]
 	#[pallet::getter(fn proposals)]
 	pub type ProposalsNumber<T> = StorageValue<_, u32, ValueQuery, InitTotal<T>>;
+
+
+
 
 
 
@@ -202,11 +214,8 @@ pub mod pallet {
 	/// The [`weight`] macro is used to assign a weight to each call.
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		/// An example dispatchable that takes a single u32 value as a parameter, writes the value
-		/// to storage and emits an event.
-		///
-		/// It checks that the _origin_ for this call is _Signed_ and returns a dispatch
-		/// error if it isn't. Learn more about origins here: <https://docs.substrate.io/build/origins/>
+		
+		/// Add needed skills to a task
 		#[pallet::call_index(0)]
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1).ref_time())]
 		pub fn additional_task_skills(origin: OriginFor<T>,task_id:Bount::BountyIndex, skill:SK::Skill<T>) -> DispatchResult {
@@ -260,12 +269,13 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Submitted task approval function
 		#[pallet::call_index(1)]
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1).ref_time())]
-		pub fn approve_task(origin: OriginFor<T>,account: T::AccountId) -> DispatchResult {
+		pub fn approve_task(origin: OriginFor<T>,task_owner: T::AccountId) -> DispatchResult {
 			let _who = T::CouncilOrigin::ensure_origin(origin.clone())?;
 						
-			let task0 = Self::get_task_infos(account.clone()).unwrap();
+			let task0 = Self::get_task_infos(task_owner.clone()).unwrap();
 			let b_id =task0.0;
 		
 			//Assess that the id is linked to a created bounty, not yet approved
@@ -275,19 +285,28 @@ pub mod pallet {
 			//Assess that task status is 'awaiting for approval'
 			let status = bounty.unwrap().get_status();
 			ensure!(status==Bount::BountyStatus::Proposed, Error::<T>::NotAPendingTask);
-	
+				
 			Bount::Pallet::<T>::approve_bounty(origin.clone(),b_id).ok();
+			let now = <frame_system::Pallet<T>>::block_number();
+			TaskStat::<T>::mutate(task_owner.clone(),|val|{
+				let mut val0 = val.clone().unwrap();
+				val0.changed_when = now;
+				val0.status = TaskStatus::Open;
+				*val = Some(val0);
+
+			});
 			
 			Ok(())
 		}
 
+		/// Submitted task rejection
 		#[pallet::call_index(2)]
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1).ref_time())]
-		pub fn reject_task(origin: OriginFor<T>, account: T::AccountId) -> DispatchResult{
+		pub fn reject_task(origin: OriginFor<T>, task_owner: T::AccountId) -> DispatchResult{
 			let _caller = T::RejectOrigin::ensure_origin(origin.clone());
 			
 			
-			let task0 = Self::get_task_infos(account.clone()).unwrap();
+			let task0 = Self::get_task_infos(task_owner.clone()).unwrap();
 			let b_id =task0.0;		
 
 			//Assess that the id is linked to a created bounty, not yet approved
@@ -295,27 +314,42 @@ pub mod pallet {
 			ensure!(bounty.is_some(), Error::<T>::NotAnExistingTask);
 			Bount::Pallet::<T>::close_bounty(origin,b_id).ok();
 
+			let now = <frame_system::Pallet<T>>::block_number();
+			TaskStat::<T>::mutate(task_owner.clone(),|val|{
+				let mut val0 = val.clone().unwrap();
+				val0.changed_when = now;
+				val0.status = TaskStatus::Rejected;
+				*val = Some(val0);
+
+			});
+
 			Ok(())
 		}
 
+		/// Employee submits a new task to the council
 		#[pallet::call_index(3)]
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1).ref_time())]
-		pub fn propose_task(origin: OriginFor<T>, skill:SK::Skill<T>, value:BalanceOf<T>,description:BoundedVecOf<T>, curator:T::AccountId) -> DispatchResult{
+		pub fn propose_task(origin: OriginFor<T>, skill:SK::Skill<T>, reward:BalanceOf<T>,description:BoundedVecOf<T>, mut curator:Option<T::AccountId>) -> DispatchResult{
 
 			// Check that the extrinsic was signed and get the signer.
 			let who = ensure_signed(origin.clone())?;
 			//Origin is an employee
 			ensure!(SK::Pallet::<T>::employee(&who).is_some(), SK::Error::<T>::NotAnEmployee);
+			if !curator.is_some(){
+				curator = Some(who.clone());
+			}
 			
 			//propose the bounty
-			Bount::Pallet::<T>::propose_bounty(origin.clone(),value,description.clone().into_inner()).ok();
-			
+			Bount::Pallet::<T>::propose_bounty(origin.clone(),reward,description.clone().into_inner()).ok();
+			let _st: Status<T> =Status::new(who.clone());
+
 			//start the council session
-			Self::start_task_session(who,curator,description,value,skill).ok();
+			Self::start_task_session(who,curator.unwrap(),description,reward,skill).ok();
 
 			Ok(())
 		}
 
+		/// Curator suggested by task_owner is contacted by the Council
 		#[pallet::call_index(4)]
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1).ref_time())]
 		pub fn propose_curator(origin:OriginFor<T>, task_owner:T::AccountId) -> DispatchResult{
@@ -329,6 +363,7 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Curator accepts role 
 		#[pallet::call_index(5)]
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1).ref_time())]
 		pub fn accept_curator(origin:OriginFor<T>, task_owner:T::AccountId) -> DispatchResult{
@@ -347,6 +382,7 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Council member vote
 		#[pallet::call_index(6)]
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1).ref_time())]
 		pub fn council_vote(origin:OriginFor<T>,task_owner:T::AccountId,approve:bool) -> DispatchResultWithPostInfo {
@@ -380,6 +416,7 @@ pub mod pallet {
 		}
 
 		
+		/// Council member close session
 		#[pallet::call_index(7)]
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1).ref_time())]
 		pub fn council_close(origin:OriginFor<T>,task_owner:T::AccountId) -> DispatchResultWithPostInfo{
@@ -408,12 +445,14 @@ pub mod pallet {
 			Ok(().into())
 		}
 
+
+		/// Worker picks a task
 		#[pallet::call_index(8)]
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1).ref_time())]
 		pub fn pick_task(origin:OriginFor<T>, task_owner:T::AccountId) -> DispatchResultWithPostInfo{
 			let caller = ensure_signed(origin)?;
 			let worker_list = Some(Self::worker(caller.clone()));
-			let task_infos = Self::get_task_infos(task_owner).unwrap();
+			let task_infos = Self::get_task_infos(task_owner.clone()).unwrap();
 			let b_id = task_infos.0;
 			
 			//Employee is already working on the task
@@ -429,25 +468,57 @@ pub mod pallet {
 				let v0 = vec![b_id];
 
 				TaskWorker::<T>::insert(caller,BoundedVec::truncate_from(v0));
+				let now = <frame_system::Pallet<T>>::block_number();
+			TaskStat::<T>::mutate(task_owner.clone(),|val|{
+				let mut val0 = val.clone().unwrap();
+				val0.changed_when = now;
+				val0.status = TaskStatus::InWork;
+				*val = Some(val0);
+
+			});
+
 			}
-			
-			
+					
 
 			Ok(().into())
 		}
 
-		//Still need to upgrade the employee when calling award_bounty from the pallet_bounties
-
+		/// Worker claims financial reward
 		#[pallet::call_index(9)]
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1).ref_time())]
 		pub fn worker_claims_reward(origin: OriginFor<T>, task_owner:T::AccountId) -> DispatchResultWithPostInfo{
+			let who = ensure_signed(origin.clone())?;
+			let task_infos = Self::get_task_infos(task_owner.clone()).unwrap();
+			let worker = Some(Self::worker(who));
+			ensure!(worker.is_some(), Error::<T>::NotPermitted);
+			let id_list = worker.unwrap().into_inner();
+			let task_id = task_infos.0;
+			ensure!(id_list.contains(&task_id), Error::<T>::NotPermitted);
+			Bount::Pallet::<T>::claim_bounty(origin,task_id).ok();
 
 			Ok(().into())
 		}
 
+		/// Curator 
 		#[pallet::call_index(10)]
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1).ref_time())]
 		pub fn curator_rewards_worker(origin: OriginFor<T>, task_owner:T::AccountId, task_worker:T::AccountId) -> DispatchResultWithPostInfo{
+			let who = ensure_signed(origin.clone())?;
+			let task_infos = Self::get_task_infos(task_owner.clone()).unwrap();
+			let curator = task_infos.1.curator;
+			ensure!(curator == who, Error::<T>::NotPermitted);
+
+			let now = <frame_system::Pallet<T>>::block_number();
+			TaskStat::<T>::mutate(task_owner.clone(),|val|{
+				let mut val0 = val.clone().unwrap();
+				val0.worker = Some(task_worker.clone());
+				val0.changed_when = now;
+				val0.status = TaskStatus::Completed;
+				*val = Some(val0);
+			});
+
+			Bount::Pallet::<T>::award_bounty(origin,task_infos.0,T::Lookup::unlookup(task_worker.clone())).ok();
+			Self::upgrade_employee(task_worker.clone(),task_owner).ok();
 
 			Ok(().into())
 		}

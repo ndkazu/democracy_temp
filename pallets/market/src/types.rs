@@ -31,9 +31,28 @@ pub enum TaskStatus{
 	#[default]
 	CouncilReview,
 	Completed,
+	Rejected,
 
 }
 
+#[derive(Clone, Encode, Decode, Default, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
+#[scale_info(skip_type_params(T))]
+#[cfg_attr(feature = "std", derive(Debug))]
+pub struct Status<T: Config>{
+	pub worker:Option<T::AccountId>,
+	pub status:TaskStatus,
+	pub changed_when: BlockNumberFor<T>
+}
+
+impl<T:Config>Status<T>{
+	pub fn new(task_owner:T::AccountId) -> Self{
+		let changed_when = <frame_system::Pallet<T>>::block_number();
+		let status = TaskStatus::default();
+		let stat = Status{worker: None,status,changed_when};
+		TaskStat::<T>::insert(task_owner, stat.clone());
+		stat
+	}
+}
 
 #[derive(Clone, Encode, Decode, Default, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 #[scale_info(skip_type_params(T))]
