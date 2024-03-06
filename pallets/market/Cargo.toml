@@ -28,6 +28,9 @@ pallet-balances = {   default-features = false, git = "https://github.com/parity
 pallet-sudo = {   default-features = false, git = "https://github.com/paritytech/polkadot-sdk",branch = "release-polkadot-v1.7.0" }
 pallet-bounties = {   default-features = false, git = "https://github.com/paritytech/polkadot-sdk",branch = "release-polkadot-v1.7.0" }
 pallet-treasury = {   default-features = false, git = "https://github.com/paritytech/polkadot-sdk",branch = "release-polkadot-v1.7.0" }
+pallet-assets = {   default-features = false, git = "https://github.com/paritytech/polkadot-sdk",branch = "release-polkadot-v1.7.0" }
+pallet-asset-rate = {   default-features = false, git = "https://github.com/paritytech/polkadot-sdk",branch = "release-polkadot-v1.7.0" }
+pallet-indices = {   default-features = false, git = "https://github.com/paritytech/polkadot-sdk",branch = "release-polkadot-v1.7.0" }
 pallet-skills = { default-features = false, path = "../skills"}
 
 [dev-dependencies]
@@ -51,6 +54,9 @@ std = [
     "pallet-bounties/std",
 	"pallet-skills/std",
 	"pallet-treasury/std",
+	"pallet-assets/std",
+	"pallet-asset-rate/std",
+	"pallet-indices/std",
 ]
 runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks"]
 try-runtime = ["frame-support/try-runtime"]

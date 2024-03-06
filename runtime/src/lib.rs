@@ -13,15 +13,13 @@ use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use node_primitives::AccountIndex;
 use sp_runtime::{
 	create_runtime_str,
-	curve::PiecewiseLinear,
 	generic, impl_opaque_keys,
 	traits::{
-		self, Verify,AccountIdConversion, IdentifyAccount,BlakeTwo256, Block as BlockT, Bounded, ConvertInto, NumberFor,
-		OpaqueKeys, SaturatedConversion, StaticLookup,IdentityLookup,
+		 Verify, IdentifyAccount,BlakeTwo256, Block as BlockT, NumberFor,
+		
 	},
-	transaction_validity::{TransactionPriority, TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult,MultiSignature, FixedPointNumber, FixedU128, Perbill, Percent, Permill, Perquintill,
-	RuntimeDebug,
+	transaction_validity::{ TransactionSource, TransactionValidity},
+	ApplyExtrinsicResult,MultiSignature, Perbill, Percent, Permill, 
 };
 use sp_std::prelude::*;
 #[cfg(feature = "std")]
@@ -357,7 +355,7 @@ parameter_types!{
 impl pallet_skills::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type RuntimeCall = RuntimeCall;
-	type StringLimit = ConstU32<256>;
+	type StringLimit = MaximumReasonLength;
 	type BasicWage = BasicWage;
 	type Currency = Balances;
 	type CheckPeriod = CheckPeriod;

@@ -74,7 +74,7 @@ impl<T:Config>TaskProposal<T>{
 	pub fn new(account:T::AccountId, curator:T::AccountId, description:BoundedVecOf<T>, value: BalanceOf<T>, proposal: T::Hash,skill:SK::Skill<T>) -> Self{
 		let now = <frame_system::Pallet<T>>::block_number();
 		let proposal_hash =  T::Hashing::hash_of(&proposal);
-		let proposal_index =Bount::Pallet::<T>::bounty_count();
+		let proposal_index =0;
 		let needed_skills:BoundedVec<SK::Skill<T>,T::MaxSkills> = BoundedVec::truncate_from(vec![skill]);
 		ProposalsNumber::<T>::put(proposal_index);
 		let proposal = TaskProposal {account, curator, description,needed_skills,value,creation_block:now,proposal_hash,proposal_index,session_closed:false,approved: SK::Approvals::default()};

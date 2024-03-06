@@ -13,12 +13,13 @@ pub use pallet_treasury as Treasury;
 mod types;
 mod functions;
 pub use types::*;
-/*
+
 #[cfg(test)]
 mod mock;
+
 #[cfg(test)]
 mod tests;
-
+/*
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 pub mod weights;
@@ -274,10 +275,11 @@ pub mod pallet {
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1).ref_time())]
 		pub fn approve_task(origin: OriginFor<T>,task_owner: T::AccountId) -> DispatchResult {
 			let _who = T::CouncilOrigin::ensure_origin(origin.clone())?;
+			
 						
 			let task0 = Self::get_task_infos(task_owner.clone()).unwrap();
 			let b_id =task0.0;
-		
+			debug_assert!(b_id==0);
 			//Assess that the id is linked to a created bounty, not yet approved
 			let bounty = Bount::Pallet::<T>::bounties(b_id);
 			ensure!(bounty.is_some(), Error::<T>::NotAnExistingTask);
@@ -285,8 +287,8 @@ pub mod pallet {
 			//Assess that task status is 'awaiting for approval'
 			let status = bounty.unwrap().get_status();
 			ensure!(status==Bount::BountyStatus::Proposed, Error::<T>::NotAPendingTask);
-				
-			Bount::Pallet::<T>::approve_bounty(origin.clone(),b_id).ok();
+
+			Bount::Pallet::<T>::approve_bounty(RawOrigin::Root.into(),b_id)?;
 			let now = <frame_system::Pallet<T>>::block_number();
 			TaskStat::<T>::mutate(task_owner.clone(),|val|{
 				let mut val0 = val.clone().unwrap();
@@ -329,20 +331,25 @@ pub mod pallet {
 		/// Employee submits a new task to the council
 		#[pallet::call_index(3)]
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1).ref_time())]
-		pub fn propose_task(origin: OriginFor<T>, skill:SK::Skill<T>, reward:BalanceOf<T>,description:BoundedVecOf<T>, mut curator:Option<T::AccountId>) -> DispatchResult{
+		pub fn propose_task(origin: OriginFor<T>,skill_id:u32, reward: BalanceOf<T>, description:BoundedVecOf<T>,curator0:T::AccountId) -> DispatchResult{
 
 			// Check that the extrinsic was signed and get the signer.
 			let who = ensure_signed(origin.clone())?;
+			let mut curator = Some(curator0);
 			//Origin is an employee
 			ensure!(SK::Pallet::<T>::employee(&who).is_some(), SK::Error::<T>::NotAnEmployee);
 			if !curator.is_some(){
 				curator = Some(who.clone());
 			}
+			let skills = SK::Pallet::<T>::skills().into_inner();
+			let skill = skills[skill_id as usize].clone();			
 			
-			//propose the bounty
-			Bount::Pallet::<T>::propose_bounty(origin.clone(),reward,description.clone().into_inner()).ok();
-			let _st: Status<T> =Status::new(who.clone());
 
+			//propose the bounty
+			Bount::Pallet::<T>::propose_bounty(origin.clone(),reward,description.clone().into_inner())?;
+			let now = <frame_system::Pallet<T>>::block_number();
+			let status:Status<T> = Status{worker:None,status: TaskStatus::CouncilReview,changed_when:now,};
+			TaskStat::<T>::insert(who.clone(),status);
 			//start the council session
 			Self::start_task_session(who,curator.unwrap(),description,reward,skill).ok();
 

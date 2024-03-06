@@ -38,8 +38,8 @@ pub fn start_task_session(account:T::AccountId,curator:T::AccountId, description
             let mut proposal_all = TaskProposal::<T>::new(account.clone(), curator.clone(), description.clone(),value,proposal_hash.clone(),skill.clone());
             proposal_all.proposal_index = index;
             proposal_all.proposal_hash = proposal_hash;
-            TasksProposalList::<T>::insert(&account,Bount::Pallet::<T>::bounty_count(), proposal_all);
-            let task_id = Bount::Pallet::<T>::bounty_count();
+            TasksProposalList::<T>::insert(&account,Bount::Pallet::<T>::bounty_count().saturating_sub(1), proposal_all);
+            let task_id = Bount::Pallet::<T>::bounty_count().saturating_sub(1);
             TaskSkills::<T>::mutate(task_id,|list|{
 				list.try_push(skill.clone()).map_err(|_| "Max number of skills reached").ok();
 			});
