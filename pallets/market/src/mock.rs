@@ -178,7 +178,7 @@ impl pallet_bounties::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type BountyDepositBase = ConstU64<80>;
 	type BountyDepositPayoutDelay = ConstU64<3>;
-	type BountyUpdatePeriod = ConstU64<20>;
+	type BountyUpdatePeriod = ConstU64<2>;
 	type CuratorDepositMultiplier = CuratorDepositMultiplier;
 	type CuratorDepositMax = CuratorDepositMax;
 	type CuratorDepositMin = CuratorDepositMin;
@@ -210,7 +210,7 @@ impl pallet_treasury::Config for Test {
 	type ProposalBond = ();
 	type ProposalBondMinimum = ();
 	type ProposalBondMaximum = ();
-	type SpendPeriod = ();
+	type SpendPeriod = ConstU64<2>;
 	type Burn = ();
 	type BurnDestination = ();
 	type PalletId = TreasuryPalletId;
@@ -223,7 +223,7 @@ impl pallet_treasury::Config for Test {
 	type BeneficiaryLookup = IdentityLookup<Self::AccountId>;
 	type Paymaster = PayFromAccount<Balances, TreasuryAccount>;
 	type BalanceConverter =  UnityAssetBalanceConversion;
-	type PayoutPeriod = ConstU64<0>;
+	type PayoutPeriod = ConstU64<2>;
 	#[cfg(feature = "runtime-benchmarks")]
 	type BenchmarkHelper = ();
 }

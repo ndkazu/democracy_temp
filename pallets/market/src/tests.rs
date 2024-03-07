@@ -1,11 +1,15 @@
 use crate::mock::*;
 use frame_support:: assert_ok;
+use self::mock::Treasury;
+
 pub use super::*;
 
 fn next_block() {
 	System::set_block_number(System::block_number() + 1);
 	SkillsModule::begin_block(System::block_number());
     MarketModule::begin_block(System::block_number());
+    Balances::on_initialize(System::block_number());
+    Treasury::on_initialize(System::block_number());
 }
 
 
@@ -77,34 +81,60 @@ assert_ok!(SkillsModule::add_my_skills(RuntimeOrigin::signed(DAVE), 1));
 assert_ok!(SkillsModule::add_my_skills(RuntimeOrigin::signed(RICHARD), 0));
 
 let dave_skills = SkillsModule::user_unv_skills(DAVE);
-//println!("Dave skills:{:?}",dave_skills);
+println!("Dave skills:{:?}",dave_skills);
 
-//Eve submits a task proposal
+// Eve submits a task proposal
 assert_ok!(MarketModule::propose_task(RuntimeOrigin::signed(EVE), 0, 500, metadata5, RICHARD));
+// EVE add another skill to the task
+assert_ok!(MarketModule::additional_task_skills(RuntimeOrigin::signed(EVE), 0, 1));
 
 
 //Council votes on Eve proposal
 
 
-assert_ok!(MarketModule::council_vote(RuntimeOrigin::signed(council[0].clone()), EVE, true));
-assert_ok!(MarketModule::council_vote(RuntimeOrigin::signed(council[1].clone()), EVE, true));
-assert_ok!(MarketModule::council_vote(RuntimeOrigin::signed(council[2].clone()), EVE, true));
-let b = MarketModule::council_close(RuntimeOrigin::signed(council[2].clone()), EVE);
+assert_ok!(MarketModule::council_vote(RuntimeOrigin::signed(council[0].clone()), EVE, true,false));
+assert_ok!(MarketModule::council_vote(RuntimeOrigin::signed(council[1].clone()), EVE, true,false));
+assert_ok!(MarketModule::council_vote(RuntimeOrigin::signed(council[2].clone()), EVE, true,false));
+assert_ok!( MarketModule::council_close(RuntimeOrigin::signed(council[2].clone()), EVE,false));
 
 //println!("Events!!!:\n\n{:?}\n\n",System::events());
-//assert_ok!(Bounties::approve_bounty(RuntimeOrigin::root(), 0));
 let  event_ref = 
 		record(RuntimeEvent::Bounties(pallet_bounties::Event::BountyApproved{index:0}));
 		assert_eq!(true,System::events().contains(&event_ref));
 
+let mut b_status = Bounties::bounties(0).unwrap().get_status();
+println!("the Bounty status is: {:?}",b_status);
 
+next_block();
+next_block();
 
-let mut now = System::block_number();
-     
+b_status = Bounties::bounties(0).unwrap().get_status();
+println!("the Bounty status is: {:?}",b_status);
 
+assert_ok!(MarketModule::propose_curator(RuntimeOrigin::signed(council[2].clone()), EVE));
+b_status = Bounties::bounties(0).unwrap().get_status();
+println!("the Bounty status is: {:?}",b_status);
 
+assert_ok!(MarketModule::council_vote(RuntimeOrigin::signed(council[0].clone()), EVE, true,true));
+assert_ok!(MarketModule::council_vote(RuntimeOrigin::signed(council[1].clone()), EVE, true,true));
+assert_ok!(MarketModule::council_vote(RuntimeOrigin::signed(council[2].clone()), EVE, true,true));
+assert_ok!(MarketModule::council_close(RuntimeOrigin::signed(council[2].clone()), EVE,true));
 
+//Richard accepts the role
+assert_ok!(MarketModule::accept_curator(RuntimeOrigin::signed(RICHARD), EVE));
+let employee = SkillsModule::employee(DAVE).unwrap();
+println!("Dave's Profile: \n{:?}\n",employee);
+//Dave pick the task
 
+assert_ok!(MarketModule::pick_task(RuntimeOrigin::signed(DAVE), EVE));
+
+//Dave finished the job, And Eve is happy. Richard is also Happy and reward DAVE
+assert_ok!(MarketModule::curator_rewards_worker(RuntimeOrigin::signed(RICHARD), EVE, DAVE));
+
+let employee = SkillsModule::employee(DAVE).unwrap();
+println!("Dave's Profile: \n{:?}\n",employee);
+let skills = MarketModule::needed_skills(0).into_inner();
+println!("needed skills: {:?}",skills)
 
 
 

@@ -296,7 +296,7 @@ impl pallet_child_bounties::Config for Runtime {
 parameter_types! {
 	pub const ProposalBond: Permill = Permill::from_percent(5);
 	pub const ProposalBondMinimum: Balance = 1 * DOLLARS;
-	pub const SpendPeriod: BlockNumber = 1 * DAYS;
+	pub const SpendPeriod: BlockNumber = 1 * MINUTES;
 	pub const Burn: Permill = Permill::from_percent(50);
 	pub const TipCountdown: BlockNumber = 1 * DAYS;
 	pub const TipFindersFee: Percent = Percent::from_percent(20);

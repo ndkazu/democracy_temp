@@ -28,7 +28,9 @@ pub use weights::*;
 // All pallet logic is defined in its own module and must be annotated by the `pallet` attribute.
 #[frame_support::pallet]
 pub mod pallet {
-	// Import various useful types required by all FRAME pallets.
+	use frame_system::EnsureRootWithSuccess;
+
+// Import various useful types required by all FRAME pallets.
 	use super::*;
 	
 
@@ -107,6 +109,12 @@ pub mod pallet {
 	pub type TaskWorker<T: Config> =
 	StorageMap<_, Twox64Concat, T::AccountId,BoundedVec<u32,T::MaxSkills>,ValueQuery>;
 
+	/// (bounty_id,curator_account)
+	#[pallet::storage]
+	#[pallet::getter(fn curator)]
+	pub type ProposedCurator<T: Config> =
+	StorageMap<_, Twox64Concat, Bount::BountyIndex,(u32,T::AccountId),OptionQuery>;
+
 
     #[pallet::type_value]
 	///Initializing function for the total number of employees
@@ -150,10 +158,18 @@ pub mod pallet {
 			by_who: BoundedVecOf<T>,
 			when: BlockNumberOf<T>,
 		},
-		/// A member of the Background Council has voted
+		/// A new task creation was requested
+		/// A member of the Council has voted
 		CouncilVoted{who: T::AccountId, proposal_index: u32, when: BlockNumberOf<T>},
-		/// A proposal has been closed by a Council member
+		/// A Task proposal session has been closed by a Council member
 		CouncilSessionClosed{who: T::AccountId, proposal_index: u32, when: BlockNumberOf<T>},
+		/// A curator was proposed by the council
+		CuratorProposed{who: T::AccountId, when:BlockNumberOf<T>},
+		/// Task creation approved by the council
+		/// Task creation rejected by the council
+		/// The Curator proposed by the task creator has been contacted by the council  
+		CouncilContactedACurator{who: T::AccountId, when: BlockNumberOf<T>},
+
 	}
 
 	/// Errors that can be returned by this pallet.
@@ -219,7 +235,7 @@ pub mod pallet {
 		/// Add needed skills to a task
 		#[pallet::call_index(0)]
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1).ref_time())]
-		pub fn additional_task_skills(origin: OriginFor<T>,task_id:Bount::BountyIndex, skill:SK::Skill<T>) -> DispatchResult {
+		pub fn additional_task_skills(origin: OriginFor<T>,task_id:Bount::BountyIndex, skill_id:u32) -> DispatchResult {
 			// Check that the extrinsic was signed and get the signer.
 			let who = ensure_signed(origin)?;
 
@@ -235,7 +251,8 @@ pub mod pallet {
 			let status = bounty.unwrap().get_status();
 			ensure!(status==Bount::BountyStatus::Approved||status==Bount::BountyStatus::Funded||status==Bount::BountyStatus::Proposed, Error::<T>::NotAPendingTask);
 
-
+			let skill_list = SK::Pallet::<T>::skills().into_inner();
+			let skill = skill_list[skill_id as usize].clone();
 			//add skill to task list, and update proposal task_listy
 			TaskSkills::<T>::mutate(task_id,|list|{
 				list.try_push(skill.clone()).map_err(|_| "Max number of skills reached").ok();
@@ -297,6 +314,7 @@ pub mod pallet {
 				*val = Some(val0);
 
 			});
+
 			
 			Ok(())
 		}
@@ -351,7 +369,11 @@ pub mod pallet {
 			let status:Status<T> = Status{worker:None,status: TaskStatus::CouncilReview,changed_when:now,};
 			TaskStat::<T>::insert(who.clone(),status);
 			//start the council session
-			Self::start_task_session(who,curator.unwrap(),description,reward,skill).ok();
+			let call = 
+				Call::<T>::approve_task{
+				task_owner: who.clone()
+				};
+			Self::start_task_session(who,call,curator.unwrap(),description,reward,skill).ok();
 
 			Ok(())
 		}
@@ -359,15 +381,28 @@ pub mod pallet {
 		/// Curator suggested by task_owner is contacted by the Council
 		#[pallet::call_index(4)]
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1).ref_time())]
-		pub fn propose_curator(origin:OriginFor<T>, task_owner:T::AccountId) -> DispatchResult{
-			let _caller = T::SpendOrigin::ensure_origin(origin.clone())?;
+		pub fn propose_curator(origin:OriginFor<T>, task_owner:T::AccountId) -> DispatchResultWithPostInfo{
+			let _max = ensure_signed(origin.clone())?;
 			let task0 = Self::get_task_infos(task_owner.clone()).unwrap();
+			let root:OriginFor<T> = RawOrigin::Root.into();
+			let _max=T::SpendOrigin::ensure_origin(root.clone());
+
 			let b_id =task0.0;
 			let cur = task0.1.curator;
-
-			Bount::Pallet::<T>::propose_curator(origin,b_id,T::Lookup::unlookup(cur),Zero::zero()).ok();
+			let index:u32 = Coll::Pallet::<T,Instance1>::proposal_count();
 			
-			Ok(())
+    	
+			let call = 
+				Call::<T>::curator_proposed{
+				curator: cur.clone()
+				};
+
+			let _bed = Bount::Pallet::<T>::propose_curator(root,b_id,T::Lookup::unlookup(cur.clone()),Zero::zero())?;
+			
+			Self::start_council(call);
+
+			ProposedCurator::<T>::insert(b_id,(index,cur.clone()));
+			Ok(().into())
 		}
 
 		/// Curator accepts role 
@@ -392,7 +427,7 @@ pub mod pallet {
 		/// Council member vote
 		#[pallet::call_index(6)]
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1).ref_time())]
-		pub fn council_vote(origin:OriginFor<T>,task_owner:T::AccountId,approve:bool) -> DispatchResultWithPostInfo {
+		pub fn council_vote(origin:OriginFor<T>,task_owner:T::AccountId,approve:bool,for_curator:bool) -> DispatchResultWithPostInfo {
 			let caller = ensure_signed(origin)?;
 			ensure!(
 				Coll::Pallet::<T, Instance1>::members().contains(&caller),
@@ -402,7 +437,7 @@ pub mod pallet {
 			let b_id = task0.0;
 			let proposal_all = Self::get_proposal(&task_owner,b_id).unwrap();
 			let index = proposal_all.proposal_index;
-			let result = Self::vote_action(caller.clone(),task_owner,approve);
+			let result = Self::vote_action(caller.clone(),task_owner,approve,for_curator);
 			
 
 			match result{
@@ -426,14 +461,14 @@ pub mod pallet {
 		/// Council member close session
 		#[pallet::call_index(7)]
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1).ref_time())]
-		pub fn council_close(origin:OriginFor<T>,task_owner:T::AccountId) -> DispatchResultWithPostInfo{
+		pub fn council_close(origin:OriginFor<T>,task_owner:T::AccountId,for_curator: bool) -> DispatchResultWithPostInfo{
 			let caller = ensure_signed(origin)?;
 
 			let task0 = Self::get_task_infos(task_owner.clone().clone()).unwrap();
 			let b_id = task0.0;
 			let proposal_all = Self::get_proposal(&task_owner,b_id).unwrap();
 			let index = proposal_all.proposal_index;
-			let result = Self::closing_vote(caller.clone(),task_owner.clone());
+			let result = Self::closing_vote(caller.clone(),task_owner.clone(),for_curator);
 			
 
 			match result{
@@ -467,14 +502,16 @@ pub mod pallet {
 				let list = worker_list.unwrap().into_inner();
 				
 				ensure!(!list.contains(&b_id), Error::<T>::AlreadyPickedUpByYou);
+
 				TaskWorker::<T>::mutate(caller.clone(),|list|{
 					list.try_push(b_id).map_err(|_| "Max number of skills reached").ok();
 				});
 				
 			} else{
 				let v0 = vec![b_id];
+				let v1:BoundedVec<u32,T::MaxSkills> = BoundedVec::truncate_from(v0.clone());
 
-				TaskWorker::<T>::insert(caller,BoundedVec::truncate_from(v0));
+				TaskWorker::<T>::insert(caller,v1);
 				let now = <frame_system::Pallet<T>>::block_number();
 			TaskStat::<T>::mutate(task_owner.clone(),|val|{
 				let mut val0 = val.clone().unwrap();
@@ -490,7 +527,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		/// Worker claims financial reward
+		/// Worker claims financial reward after being acknowledged by curator
 		#[pallet::call_index(9)]
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1).ref_time())]
 		pub fn worker_claims_reward(origin: OriginFor<T>, task_owner:T::AccountId) -> DispatchResultWithPostInfo{
@@ -506,7 +543,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		/// Curator 
+		/// Curator rewards worker
 		#[pallet::call_index(10)]
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1).ref_time())]
 		pub fn curator_rewards_worker(origin: OriginFor<T>, task_owner:T::AccountId, task_worker:T::AccountId) -> DispatchResultWithPostInfo{
@@ -527,6 +564,19 @@ pub mod pallet {
 			Bount::Pallet::<T>::award_bounty(origin,task_infos.0,T::Lookup::unlookup(task_worker.clone())).ok();
 			Self::upgrade_employee(task_worker.clone(),task_owner).ok();
 
+			Ok(().into())
+		}
+
+		/// Curator rewards worker
+		#[pallet::call_index(11)]
+		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1).ref_time())]
+		pub fn curator_proposed(origin: OriginFor<T>, curator:T::AccountId) -> DispatchResultWithPostInfo{
+			let _who = T::CouncilOrigin::ensure_origin(origin.clone())?;
+			let when = <frame_system::Pallet<T>>::block_number();
+			Self::deposit_event(Event::CuratorProposed{
+				who: curator,
+				when
+			});
 			Ok(().into())
 		}
 	}
