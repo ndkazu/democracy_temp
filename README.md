@@ -1,10 +1,24 @@
-# Skill Tracker
+# Skill Tracker Module
 
 A skills/Income management system for HR
+
 
 Tracking employee skills, and paying them according to their real skills set is a real challenge. As a result, promotions are often based on subjective factors, don't take in account all the skills and knowledge
 that were not included in the job offer, but were still necessary to complete the job.
 The aim of skill tracker is to solve this exact problem, by allowing employees to submit their skill set, and allowing their peers to actually confirm which skills are being used through the use of a *Task MarketPlace* .
+
+Two pallets were created for this module
+
+## Skills Pallet
+
+Manages the addition of new employees, addition of new skills to the database, and addition of *Unverified_Skills*.
+
+## Market Pallet
+
+Manages the addition of a *Working_Task*, addition of a *Curator* for the task, attribution of *Skill_Points* and *Experience_Points* to employees as well as employee wage increase. Verification of *Unverified_Skills* is also included.
+
+## Roles
+
 The different roles acting in this program are described below:
 
 Alice, Bob and Charlie are members of the HR council:
@@ -19,13 +33,20 @@ Employees can accomplish the following tasks:
 - Add a working task to the market place, and suggest a curator for the task: Employees completing the task will get Skill Points, and unverified skills related to the task will be moved to the verified category
 - As a curator, they review the completion of a working task, and award employees who completed the task 
 
-## Getting Started
+## Interface
 
-Depending on your operating system and Rust version, there might be additional packages required to compile this template.
-Check the [Install](https://docs.substrate.io/install/) instructions for your platform for the most common dependencies.
-Alternatively, you can use one of the [alternative installation](#alternatives-installations) options.
+### Pallet Skills
+- `new_employee` - Adds a new employee to the database, only accessible by members of the council
+- `submit_skill` - Employee submits a skill for addition to the skill database.
+- `add_my_skills`- Employee adds a database skill to his profile. This skill is unverified at this point.
 
-the 
+### Pallet Market
+- `propose_task` - Employee creates a new *Working_Task* that will be completed by his/her skilled peers.
+- `propose_curator` - Curator role is proposed to the employee by the Council. the curator/employee is suggested by the task creator during task creation.
+- `accept_curator` - Employee accepts Curator role.
+- `pick_task` - Employee takes on an available working task
+- `curator_rewards_worker`- Curator rewards Employee for completion of a *Working_Task* in *Skill_points* and *reward_fees* .
+- `worker_claims_reward` - Employee accepts the reward granted by the curator 
 
 ### Build
 
@@ -100,6 +121,8 @@ db keystore network
 After you start the node template locally, you can interact with it using the hosted version of the [Polkadot/Substrate Portal](https://polkadot.js.org/apps/#/explorer?rpc=ws://localhost:9944) front-end by connecting to the local node endpoint.
 A hosted version is also available on [IPFS (redirect) here](https://dotapps.io/) or [IPNS (direct) here](ipns://dotapps.io/?rpc=ws%3A%2F%2F127.0.0.1%3A9944#/explorer).
 You can also find the source code and instructions for hosting your own instance on the [polkadot-js/apps](https://github.com/polkadot-js/apps) repository.
+
+
 
 ### Multi-Node Local Testnet
 
