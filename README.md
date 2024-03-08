@@ -1,18 +1,31 @@
-# Substrate Node Template
+# Skill Tracker
 
-A fresh [Substrate](https://substrate.io/) node, ready for hacking :rocket:
+A skills/Income management system for HR
 
-A standalone version of this template is available for each release of Polkadot in the [Substrate Developer Hub Parachain Template](https://github.com/substrate-developer-hub/substrate-parachain-template/) repository.
-The parachain template is generated directly at each Polkadot release branch from the [Node Template in Substrate](https://github.com/paritytech/substrate/tree/master/bin/node-template) upstream
+Tracking employee skills, and paying them according to their real skills set is a real challenge. As a result, promotions are often based on subjective factors, don't take in account all the skills and knowledge
+that were not included in the job offer, but were still necessary to complete the job.
+The aim of skill tracker is to solve this exact problem, by allowing employees to submit their skill set, and allowing their peers to actually confirm which skills are being used through the use of a *Task MarketPlace* .
+The different roles acting in this program are described below:
 
-It is usually best to use the stand-alone version to start a new project.
-All bugs, suggestions, and feature requests should be made upstream in the [Substrate](https://github.com/paritytech/substrate/tree/master/bin/node-template) repository.
+Alice, Bob and Charlie are members of the HR council:
+- They input new employees in the system
+- They review the addition of new skills in the skill database by employees
+- They review the addition of a new working task to the MarketPlace by employees
+- Once a working task is accepted by the council, the council vote on the selection of a curator for the working task 
+
+Employees can accomplish the following tasks:
+- Submit a new skill to the council, for addition to the skills database
+- Add a skill to their profile: this skill will be added the Unverified_Skills category
+- Add a working task to the market place, and suggest a curator for the task: Employees completing the task will get Skill Points, and unverified skills related to the task will be moved to the verified category
+- As a curator, they review the completion of a working task, and award employees who completed the task 
 
 ## Getting Started
 
 Depending on your operating system and Rust version, there might be additional packages required to compile this template.
 Check the [Install](https://docs.substrate.io/install/) instructions for your platform for the most common dependencies.
 Alternatively, you can use one of the [alternative installation](#alternatives-installations) options.
+
+the 
 
 ### Build
 
