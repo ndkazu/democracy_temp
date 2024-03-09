@@ -15,15 +15,22 @@ export interface AppState {
   skills: string[];
 }
 
-export interface AccountContextState {
+export interface AccountState {
   address: Address;
   user_name: string;
-  //ver_skills: Skill[];
-  //unver_skills: Skill[];
+  ver_skills: string[];
+  unver_skills: string[];
   balance: BN | undefined;
-  user_ver_skills_nbr: number;
-  user_unv_skills_nbr: number;
   user_sp: number;
   user_xp: number;
   user_wage: number;
+}
+
+export interface CouncilSessionState {
+  approved: boolean;
+  session_subject: string;
+  session_closed: boolean;
+  ayes: number;
+  nay: number;
+  council_members: InjectedAccountWithMeta[];
 }
