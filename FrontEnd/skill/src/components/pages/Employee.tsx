@@ -18,4 +18,13 @@ export default function Employee() {
     user_wage,
     dispatch1,
   } = useAccountContext();
+
+  useEffect(() => {
+    if (!api || !selectedAccount) return;
+    let address0 = selectedAccount.address;
+    api.query.skillsModule.employee(address0, (employee0: any) => {
+      let emp = employee0.toHuman;
+      console.log(emp);
+    });
+  });
 }
