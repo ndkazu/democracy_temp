@@ -7,7 +7,7 @@ Tracking employee skills, and paying them according to their real skills set is 
 that were not included in the job offer, but were still necessary to complete the job.
 The aim of skill tracker is to solve this exact problem, by allowing employees to submit their skill set, and allowing their peers to actually confirm which skills are being used through the use of a *Task MarketPlace* .
 
-Two pallets were created for this module
+**Two pallets were created for this module**
 
 ## Skills Pallet
 
