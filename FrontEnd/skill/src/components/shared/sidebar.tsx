@@ -5,11 +5,11 @@ export default function SideBar() {
   return (
     <Sidebar style={{ backgroundColor: 'red' }}>
       <Menu>
-        <MenuItem component={<Link to="/dashboard" />}> DashBoard </MenuItem>
+        <MenuItem component={<Link to="/Dashboard" />}> DashBoard </MenuItem>
         <MenuItem> Council </MenuItem>
 
         <MenuItem> Curator </MenuItem>
-        <MenuItem> Employee </MenuItem>
+        <MenuItem component={<Link to="/employee" />}> Employee </MenuItem>
       </Menu>
     </Sidebar>
   );

@@ -27,4 +27,6 @@ export default function Employee() {
       console.log(emp);
     });
   });
+
+  return <div>Employee</div>;
 }
