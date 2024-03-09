@@ -12,7 +12,8 @@ const initialState: AppState = {
   blocks: '',
   treasury_balance: undefined,
   web3Name: undefined,
-  total_skills_number: 0,
+  total_employees_number: 0,
+  skills: [],
 };
 
 type Action =
@@ -23,7 +24,8 @@ type Action =
   | { type: 'SET_BLOCKS'; payload: string }
   | { type: 'SET_TREASURY_BALANCE'; payload: BN }
   | { type: 'SET_WEB3_NAME'; payload: string | undefined }
-  | { type: 'SET_SKILLS_NBR'; payload: number };
+  | { type: 'SET_EMPLOYEES_NBR'; payload: number }
+  | { type: 'SET_SKILLS'; payload: string[] };
 
 function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
@@ -41,8 +43,10 @@ function reducer(state: AppState, action: Action): AppState {
       return { ...state, treasury_balance: action.payload };
     case 'SET_WEB3_NAME':
       return { ...state, web3Name: action.payload };
-    case 'SET_SKILLS_NBR':
-      return { ...state, total_skills_number: action.payload };
+    case 'SET_EMPLOYEES_NBR':
+      return { ...state, total_employees_number: action.payload };
+    case 'SET_SKILLS':
+      return { ...state, skills: action.payload };
 
     default:
       return state;
@@ -71,7 +75,8 @@ export function AppProvider({ children }: Props) {
       blocks,
       treasury_balance,
       web3Name,
-      total_skills_number,
+      total_employees_number,
+      skills,
     },
     dispatch,
   ] = useReducer(reducer, initialState);
@@ -85,7 +90,8 @@ export function AppProvider({ children }: Props) {
         blocks,
         treasury_balance,
         web3Name,
-        total_skills_number,
+        total_employees_number,
+        skills,
         dispatch,
       }}
     >

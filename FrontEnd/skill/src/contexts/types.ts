@@ -11,7 +11,8 @@ export interface AppState {
   blocks: string;
   treasury_balance: BN | undefined;
   web3Name: string | undefined;
-  total_skills_number: number;
+  total_employees_number: number;
+  skills: string[];
 }
 
 export interface AccountContextState {
