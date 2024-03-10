@@ -307,10 +307,7 @@ pub fn begin_block(now: BlockNumberOf<T>) -> Weight{
                 let council_member = Coll::Pallet::<T,Instance1>::members()[0].clone();
                 proposal.dispatch_bypass_filter(frame_system::RawOrigin::Signed(council_member).into()).ok();
                 TasksProposalList::<T>::remove(&proposal_all.0.clone(),proposal_all.1);
-            } else if prop == 1 {
-                
-                TasksProposalList::<T>::remove(&proposal_all.0,proposal_all.1);
-            }
+            } 
         }
         
     }

@@ -111,7 +111,7 @@ next_block();
 b_status = Bounties::bounties(0).unwrap().get_status();
 println!("the Bounty status is: {:?}",b_status);
 
-assert_ok!(MarketModule::propose_curator(RuntimeOrigin::signed(council[2].clone()), EVE));
+assert_ok!(MarketModule::propose_curator(RuntimeOrigin::signed(council[0].clone()), EVE));
 b_status = Bounties::bounties(0).unwrap().get_status();
 println!("the Bounty status is: {:?}",b_status);
 
