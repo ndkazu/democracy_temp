@@ -141,6 +141,50 @@ After you start the node template locally, you can interact with it using the ho
 A hosted version is also available on [IPFS (redirect) here](https://dotapps.io/) or [IPNS (direct) here](ipns://dotapps.io/?rpc=ws%3A%2F%2F127.0.0.1%3A9944#/explorer).
 You can also find the source code and instructions for hosting your own instance on the [polkadot-js/apps](https://github.com/polkadot-js/apps) repository.
 
+### Polkadot.JS calls
+
+The series of calls below can be used to replicate a successful worflow:
+
+- Alice_stash makes a donation
+  `0x10000c0403001cbd2d43530a44705ad088af313e18f80b53ef16b36177cd4b77b846f2a5f07c0f0080a1a76b4a35040300e659a7a1628cdd93febc04a4e0646ea20e9f5f0ce097d9a05290d4a9e054df4e0f0000434fd7946a040300306721211d5404bd9da88e0204360a1a9ab8b87c66c1bc2fcdd37f3c2222cc200f008062175ed158`
+
+- Funds sent to Treasury:
+  `0x07000408006d6f646c70792f747273727900000000000000000000000000000000000000001f000000677f9aa7c24eca05`
+
+Part 1
+
+- Alice create 3 employees: Eve, Ferdie, and Bob_Stash
+  `0x10000c08051cbd2d43530a44705ad088af313e18f80b53ef16b36177cd4b77b846f2a5f07c2c46657264696520426c75650805e659a7a1628cdd93febc04a4e0646ea20e9f5f0ce097d9a05290d4a9e054df4e24457665204576616e730805fe65717dad0447d715f660a0a58411de509b42e6efb8375f562f58a554d5860e2c426f6262792042726f776e`
+
+- Ferdie submit a new skill: "Rust Programming"
+  `0x080240527573742050726f6772616d6d696e670102`
+
+- Alice vote for Ferdie
+  `0x10000408031cbd2d43530a44705ad088af313e18f80b53ef16b36177cd4b77b846f2a5f07c01`
+
+- Bob vote for Ferdie and close the session
+  `0x10000808031cbd2d43530a44705ad088af313e18f80b53ef16b36177cd4b77b846f2a5f07c0108041cbd2d43530a44705ad088af313e18f80b53ef16b36177cd4b77b846f2a5f07c`
+
+- Ferdie add an unverified skill to her profile
+  `0x080600000000`
+
+Part 2
+
+- Eve submit a task proposal, suggest Bob_Stash as Curator
+  `0x0903000000000070c9b28b00000000000000000000001074657374fe65717dad0447d715f660a0a58411de509b42e6efb8375f562f58a554d5860e`
+
+- Alice vote for Eve proposal
+  `0x0906e659a7a1628cdd93febc04a4e0646ea20e9f5f0ce097d9a05290d4a9e054df4e0100`
+
+- Bob vote for Eve proposal
+  `0x1000080906e659a7a1628cdd93febc04a4e0646ea20e9f5f0ce097d9a05290d4a9e054df4e01000907e659a7a1628cdd93febc04a4e0646ea20e9f5f0ce097d9a05290d4a9e054df4e00`
+
+We need "Funded" status for the proposal at this point:
+Go to the Governance tab-->boounties --> takes 1_min
+
+- Council(Alice) propose the curator suggested by Eve for review to the council
+  `0x0904e659a7a1628cdd93febc04a4e0646ea20e9f5f0ce097d9a05290d4a9e054df4e`
+
 ### Multi-Node Local Testnet
 
 If you want to see the multi-node consensus algorithm in action, see [Simulate a network](https://docs.substrate.io/tutorials/build-a-blockchain/simulate-network/).
