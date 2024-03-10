@@ -2,59 +2,79 @@
 
 A skills/Income management system for HR
 
-
 Tracking employee skills, and paying them according to their real skills set is a real challenge. As a result, promotions are often based on subjective factors, don't take in account all the skills and knowledge
 that were not included in the job offer, but were still necessary to complete the job.
-The aim of skill tracker is to solve this exact problem, by allowing employees to submit their skill set, and allowing their peers to actually confirm which skills are being used through the use of a *Task MarketPlace* .
+The aim of skill tracker is to solve this exact problem, by allowing employees to submit their skill set, and allowing their peers to actually confirm which skills are being used through the use of a _Task MarketPlace_ .
 
 **Two pallets were created for this module**
 
 ## Skills Pallet
 
-Manages the addition of new employees, addition of new skills to the database, and addition of *Unverified_Skills*.
+Manages the addition of new employees, addition of new skills to the database, and addition of _Unverified_Skills_.
 
 ## Market Pallet
 
-Manages the addition of a *Working_Task*, addition of a *Curator* for the task, attribution of *Skill_Points* and *Experience_Points* to employees as well as employee wage increase. Verification of *Unverified_Skills* is also included.
+Manages the addition of a _Working_Task_, addition of a _Curator_ for the task, attribution of _Skill_Points_ and _Experience_Points_ to employees as well as employee wage increase. Verification of _Unverified_Skills_ is also included.
 
 ## Roles
 
 The different roles acting in this program are described below:
 
 Alice, Bob and Charlie are members of the HR council:
+
 - They input new employees in the system
 - They review the addition of new skills in the skill database by employees
 - They review the addition of a new working task to the MarketPlace by employees
-- Once a working task is accepted by the council, the council vote on the selection of a curator for the working task 
+- Once a working task is accepted by the council, the council vote on the selection of a curator for the working task
 
 Employees can accomplish the following tasks:
+
 - Submit a new skill to the council, for addition to the skills database
 - Add a skill to their profile: this skill will be added the Unverified_Skills category
 - Add a working task to the market place, and suggest a curator for the task: Employees completing the task will get Skill Points, and unverified skills related to the task will be moved to the verified category
-- As a curator, they review the completion of a working task, and award employees who completed the task 
+- As a curator, they review the completion of a working task, and award employees who completed the task
 
 ## Interface
 
 ### Pallet Skills
+
 - `new_employee` - Adds a new employee to the database, only accessible by members of the council
 - `submit_skill` - Employee submits a skill for addition to the skill database.
 - `add_my_skills`- Employee adds a database skill to his profile. This skill is unverified at this point.
 
 ### Pallet Market
-- `propose_task` - Employee creates a new *Working_Task* that will be completed by his/her skilled peers.
+
+- `propose_task` - Employee creates a new _Working_Task_ that will be completed by his/her skilled peers.
 - `propose_curator` - Curator role is proposed to the employee by the Council. the curator/employee is suggested by the task creator during task creation.
 - `accept_curator` - Employee accepts Curator role.
 - `pick_task` - Employee takes on an available working task
-- `curator_rewards_worker`- Curator rewards Employee for completion of a *Working_Task* in *Skill_points* and *reward_fees* .
-- `worker_claims_reward` - Employee accepts the reward granted by the curator 
+- `curator_rewards_worker`- Curator rewards Employee for completion of a _Working_Task_ in _Skill_points_ and _reward_fees_ .
+- `worker_claims_reward` - Employee accepts the reward granted by the curator
 
-### Build
+### Build, Launch, Front-End
 
 Use the following command to build the node without launching it:
 
 ```sh
 cargo build --release
 ```
+
+Next, you can launch the node:
+
+```sh
+./target/release/node-template --dev
+```
+
+At the moment The Fron-End only convers extrinsics of the Skills pallet:
+
+- `new_employee`
+- `submit_skill`
+- `add_my_skills`
+  They are demostrated in the following Youtube video.
+  the tests file in the folder `pallets/market/src/tests.rs` shows an example of successful workflow.
+  You can also use Polkadot.js to replicate this workflow.
+
+You will need to go under the `FrontEnd` folder, and run `npm install` before following the instructions given in the ReadMe file, located in the same folder.
 
 ### Embedded Docs
 
@@ -97,7 +117,6 @@ Development chains:
 - Use the **Alice** account as the default `sudo` account.
 - Are preconfigured with a genesis state (`/node/src/chain_spec.rs`) that includes several prefunded development accounts.
 
-
 To persist chain state between runs, specify a base path by running a command similar to the following:
 
 ```sh
@@ -121,8 +140,6 @@ db keystore network
 After you start the node template locally, you can interact with it using the hosted version of the [Polkadot/Substrate Portal](https://polkadot.js.org/apps/#/explorer?rpc=ws://localhost:9944) front-end by connecting to the local node endpoint.
 A hosted version is also available on [IPFS (redirect) here](https://dotapps.io/) or [IPNS (direct) here](ipns://dotapps.io/?rpc=ws%3A%2F%2F127.0.0.1%3A9944#/explorer).
 You can also find the source code and instructions for hosting your own instance on the [polkadot-js/apps](https://github.com/polkadot-js/apps) repository.
-
-
 
 ### Multi-Node Local Testnet
 
@@ -154,8 +171,6 @@ Take special note of the following:
 - [`service.rs`](./node/src/service.rs): This file defines the node implementation.
   Take note of the libraries that this file imports and the names of the functions it invokes.
   In particular, there are references to consensus-related topics, such as the [block finalization and forks](https://docs.substrate.io/fundamentals/consensus/#finalization-and-forks) and other [consensus mechanisms](https://docs.substrate.io/fundamentals/consensus/#default-consensus-models) such as Aura for block authoring and GRANDPA for finality.
-
-
 
 ### Runtime
 
