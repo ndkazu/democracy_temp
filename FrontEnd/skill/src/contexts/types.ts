@@ -16,6 +16,7 @@ export interface AppState {
 }
 
 export interface AccountState {
+  user_id: number;
   address: Address;
   user_name: string;
   ver_skills: string[];
@@ -23,7 +24,7 @@ export interface AccountState {
   balance: BN | undefined;
   user_sp: number;
   user_xp: number;
-  user_wage: number;
+  user_wage: BN | undefined;
 }
 
 export interface CouncilSessionState {
@@ -33,4 +34,15 @@ export interface CouncilSessionState {
   ayes: number;
   nay: number;
   council_members: InjectedAccountWithMeta[];
+}
+
+export enum SkillLevel {
+  Level1 = 'Level1',
+  Level2 = 'Level2',
+  Level3 = 'Level3',
+  Level4 = 'Level4',
+}
+export enum SkillFamily {
+  Soft = 'Soft',
+  Technical = 'Technical',
 }

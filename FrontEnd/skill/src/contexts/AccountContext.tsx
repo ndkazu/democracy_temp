@@ -3,6 +3,7 @@ import { AccountState } from './types';
 import BN from 'bn.js';
 
 const initialState: AccountState = {
+  user_id: 0,
   address: '',
   user_name: '',
   ver_skills: [],
@@ -10,10 +11,11 @@ const initialState: AccountState = {
   balance: undefined,
   user_sp: 0,
   user_xp: 0,
-  user_wage: 0,
+  user_wage: undefined,
 };
 
 type Action =
+  | { type: 'SET_USER_ID'; payload: number }
   | { type: 'SET_ADDRESS'; payload: string }
   | { type: 'SET_USER_NAME'; payload: string }
   | { type: 'SET_VER_SKILLS'; payload: string[] }
@@ -21,10 +23,13 @@ type Action =
   | { type: 'SET_BALANCE'; payload: BN }
   | { type: 'SET_SP'; payload: number }
   | { type: 'SET_XP'; payload: number }
-  | { type: 'SET_wage'; payload: number };
+  | { type: 'SET_WAGE'; payload: BN };
 
 function reducer(state: AccountState, action: Action): AccountState {
   switch (action.type) {
+    case 'SET_USER_ID':
+      return { ...state, user_id: action.payload };
+
     case 'SET_ADDRESS':
       return { ...state, address: action.payload };
 
@@ -46,7 +51,7 @@ function reducer(state: AccountState, action: Action): AccountState {
     case 'SET_XP':
       return { ...state, user_xp: action.payload };
 
-    case 'SET_wage':
+    case 'SET_WAGE':
       return { ...state, user_wage: action.payload };
 
     default:
@@ -68,12 +73,13 @@ type Props = {
 
 export function AccountProvider({ children }: Props) {
   const [
-    { address, user_name, ver_skills, unver_skills, balance, user_sp, user_xp, user_wage },
+    { user_id, address, user_name, ver_skills, unver_skills, balance, user_sp, user_xp, user_wage },
     dispatch1,
   ] = useReducer(reducer, initialState);
   return (
     <AccountContext.Provider
       value={{
+        user_id,
         address,
         user_name,
         ver_skills,

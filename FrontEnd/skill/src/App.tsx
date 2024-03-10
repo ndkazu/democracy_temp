@@ -1,11 +1,14 @@
 import React from 'react';
 import { AppProvider } from './contexts/AppContext';
+import { AccountProvider } from './contexts/AccountContext';
 import { Layout } from './components/shared/Layout';
 
 function App() {
   return (
     <AppProvider>
-      <Layout />
+      <AccountProvider>
+        <Layout />
+      </AccountProvider>
     </AppProvider>
   );
 }

@@ -23,7 +23,9 @@ export default function Dashboard() {
 
     api.query.system.account(treasury_address, ({ data: free }: { data: { free: BN } }) => {
       let { free: balance1 } = free;
+
       dispatch({ type: 'SET_TREASURY_BALANCE', payload: balance1 });
+      console.log('Treasury balance:', treasury_balance);
     });
 
     api.query.skillsModule.employeesNumber((data: number) => {
