@@ -1,18 +1,15 @@
 import React, { useEffect } from 'react';
 import { useAppContext } from '../../contexts/AppContext';
 import BN from 'bn.js';
-import { NavLink } from 'react-router-dom';
 import { toUnit } from '../shared/utils';
 import { useAccountContext } from '../../contexts/AccountContext';
-import { Button, Card } from 'antd';
-import MyForm from '../shared/form';
-import { web3FromAddress } from '@polkadot/extension-dapp';
+import { Card } from 'antd';
+import SkillForm from '../shared/Skillform';
 
 export default function Employee() {
-  const { api, blocks, accounts, selectedAccount, selectedAddress, dispatch } = useAppContext();
+  const { api, blocks, selectedAccount } = useAppContext();
   const {
     user_id,
-    address,
     user_name,
     ver_skills,
     unver_skills,
@@ -101,7 +98,7 @@ export default function Employee() {
               ))}
         </p>
       </Card>
-      <MyForm />
+      <SkillForm />
     </div>
   );
 }

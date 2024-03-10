@@ -115,6 +115,12 @@ pub mod pallet {
 	pub type ProposedCurator<T: Config> =
 	StorageMap<_, Twox64Concat, Bount::BountyIndex,(u32,T::AccountId),OptionQuery>;
 
+	/// (bounty_id,curator_account)
+	#[pallet::storage]
+	#[pallet::getter(fn active_curator)]
+	pub type ActiveCurator<T: Config> =
+	StorageMap<_, Twox64Concat, Bount::BountyIndex,(u32,T::AccountId),OptionQuery>;
+
 
     #[pallet::type_value]
 	///Initializing function for the total number of employees
@@ -418,9 +424,12 @@ pub mod pallet {
 			let bounty_status = bounty.get_status();
 			ensure!(bounty_status == Bount::BountyStatus::CuratorProposed{curator: cur.clone()}, Error::<T>::NotPermitted);
 
+			let curator_infos = Self::curator(b_id).unwrap();
+			ActiveCurator::<T>::insert(b_id,curator_infos);
+
 			ensure!(who==cur,Error::<T>::NotPermitted);
 			Bount::Pallet::<T>::accept_curator(origin,b_id).ok();
-
+			ProposedCurator::<T>::remove(b_id);
 			Ok(())
 		}
 

@@ -36,6 +36,14 @@ export interface CouncilSessionState {
   council_members: InjectedAccountWithMeta[];
 }
 
+export interface TaskState {
+  task_owner: string;
+  task_id: number;
+  task_list: string[];
+  task_description: string | undefined;
+  active_curator: InjectedAccountWithMeta | undefined;
+}
+
 export enum SkillLevel {
   Level1 = 'Level1',
   Level2 = 'Level2',

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button, Checkbox } from 'antd';
 import type { CheckboxProps } from 'antd';
-import { useState, useEffect, FormEvent } from 'react';
+import { useState, FormEvent } from 'react';
 import { SkillLevel } from '../../contexts/types';
 import { SkillFamily } from '../../contexts/types';
 import { useAccountContext } from '../../contexts/AccountContext';
@@ -14,7 +14,7 @@ type SkProp = {
   type: SkillFamily;
 };
 
-export default function MyForm() {
+export default function SkillForm() {
   const { api, blocks, accounts, selectedAccount, selectedAddress, dispatch } = useAppContext();
   const {
     user_id,
