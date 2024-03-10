@@ -183,7 +183,9 @@ We need "Funded" status for the proposal at this point:
 Go to the Governance tab-->boounties --> takes 1_min
 
 - Council(Alice) propose the curator suggested by Eve for review to the council
-  `0x0904e659a7a1628cdd93febc04a4e0646ea20e9f5f0ce097d9a05290d4a9e054df4e`
+  `0x0904e659a7a1628cdd93febc04a4e0646ea20e9f5f0ce097d9a05290d4a9e054df4e` => Succeeds in tests, Fails in Polkadot.js
+
+- Curator (Bob_Stash) accepts role => Coming soon, available in tests
 
 ### Multi-Node Local Testnet
 
