@@ -69,6 +69,7 @@ At the moment The Front-End only convers extrinsics of the Skills pallet:
 
 - `submit_skill`
 - `add_my_skills`
+  
   They are demonstrated in the following Youtube video: https://youtu.be/KCsrnkx4uj8?si=Jkby6887Umj7z6v6 .
   the tests file in the folder `pallets/market/src/tests.rs` shows an example of successful workflow.
   You can also use Polkadot.js to replicate this workflow.
