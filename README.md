@@ -65,16 +65,15 @@ Next, you can launch the node:
 ./target/release/node-template --dev
 ```
 
-At the moment The Fron-End only convers extrinsics of the Skills pallet:
+At the moment The Front-End only convers extrinsics of the Skills pallet:
 
-- `new_employee`
 - `submit_skill`
 - `add_my_skills`
-  They are demostrated in the following Youtube video.
+  They are demonstrated in the following Youtube video: https://youtu.be/KCsrnkx4uj8?si=Jkby6887Umj7z6v6 .
   the tests file in the folder `pallets/market/src/tests.rs` shows an example of successful workflow.
   You can also use Polkadot.js to replicate this workflow.
 
-You will need to go under the `FrontEnd` folder, and run `npm install` before following the instructions given in the ReadMe file, located in the same folder.
+For the Front-End, you will need to go under the `FrontEnd` folder, and run `npm install` before following the instructions given in the ReadMe file, located in the same folder.
 
 ### Embedded Docs
 
