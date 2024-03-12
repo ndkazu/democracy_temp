@@ -31,7 +31,7 @@ Employees can accomplish the following tasks:
 
 - Submit a new skill to the council, for addition to the skills database
 - Add a skill to their profile: this skill will be added the Unverified_Skills category
-- Add a working task to the market place, and suggest a curator for the task: Employees completing the task will get Skill Points, and unverified skills related to the task will be moved to the verified category
+- Add a working task to the market place, and suggest a curator for the task: Employees completing the task will get Skill Points, and _Unverified_Skills_ related to the task will be moved to the verified category. An increase in 5 _Skill_Points_ will lead to an increase of 1 _XP_ point, and 1 _XP_ point corresponds to an hourly wage increase of 1%
 - As a curator, they review the completion of a working task, and award employees who completed the task
 
 ## Interface
@@ -65,7 +65,7 @@ Next, you can launch the node:
 ./target/release/node-template --dev
 ```
 
-At the moment The Front-End only convers extrinsics of the Skills pallet:
+At the moment The Front-End only covers extrinsics of the Skills pallet:
 
 - `submit_skill`
 - `add_my_skills`
@@ -153,10 +153,10 @@ The series of calls below can be used to replicate a successful worflow:
 
 Part 1
 
-- Alice create 3 employees: Eve, Ferdie, and Bob_Stash
+- Alice creates 3 employees: Eve, Ferdie, and Bob_Stash
   `0x10000c08051cbd2d43530a44705ad088af313e18f80b53ef16b36177cd4b77b846f2a5f07c2c46657264696520426c75650805e659a7a1628cdd93febc04a4e0646ea20e9f5f0ce097d9a05290d4a9e054df4e24457665204576616e730805fe65717dad0447d715f660a0a58411de509b42e6efb8375f562f58a554d5860e2c426f6262792042726f776e`
 
-- Ferdie submit a new skill: "Rust Programming"
+- Ferdie submits a new skill: "Rust Programming"
   `0x080240527573742050726f6772616d6d696e670102`
 
 - Alice vote for Ferdie
@@ -165,12 +165,12 @@ Part 1
 - Bob vote for Ferdie and close the session
   `0x10000808031cbd2d43530a44705ad088af313e18f80b53ef16b36177cd4b77b846f2a5f07c0108041cbd2d43530a44705ad088af313e18f80b53ef16b36177cd4b77b846f2a5f07c`
 
-- Ferdie add an unverified skill to her profile
+- Ferdie adds an unverified skill to her profile
   `0x080600000000`
 
 Part 2
 
-- Eve submit a task proposal, suggest Bob_Stash as Curator
+- Eve submits a task proposal, suggest Bob_Stash as Curator
   `0x0903000000000070c9b28b00000000000000000000001074657374fe65717dad0447d715f660a0a58411de509b42e6efb8375f562f58a554d5860e`
 
 - Alice vote for Eve proposal
@@ -182,13 +182,13 @@ Part 2
 We need "Funded" status for the proposal at this point:
 Go to the Governance tab-->boounties --> takes 1_min
 
-- Council(Alice) propose the curator suggested by Eve for review to the council
+- Council(Alice) proposes the curator suggested by Eve for review to the council
   `0x0904e659a7a1628cdd93febc04a4e0646ea20e9f5f0ce097d9a05290d4a9e054df4e`
 
 - Curator (Bob_Stash) accepts role => Coming soon, available in tests
   `0x0905e659a7a1628cdd93febc04a4e0646ea20e9f5f0ce097d9a05290d4a9e054df4e`
 
-- Worker (Ferdie) pick the task
+- Worker (Ferdie) picks the task
   `0x0908e659a7a1628cdd93febc04a4e0646ea20e9f5f0ce097d9a05290d4a9e054df4e`
 
 - After task completion (Confirmed off-chain), Curator (Bob-Stash) rewards Worker (Ferdie)
