@@ -41,6 +41,7 @@ export default function Employee() {
     api.query.skillsModule.userVerifiedSkills(address0, (data: any) => {
       let ver = data.toHuman();
       console.log('Verified: ', ver);
+      dispatch1({ type: 'SET_VER_SKILLS', payload: ver });
     });
 
     api.query.skillsModule.employeeLog(address0, (employee0: any) => {

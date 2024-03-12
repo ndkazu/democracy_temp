@@ -38,6 +38,7 @@ pub enum SkillFamily{
 pub enum Approvals{
 	YES,
 	NO,
+	AWAITINGCURATOR,
 	#[default]
 	AWAITING,
 }

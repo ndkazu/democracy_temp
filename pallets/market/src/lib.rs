@@ -302,7 +302,13 @@ pub mod pallet {
 						
 			let task0 = Self::get_task_infos(task_owner.clone()).unwrap();
 			let b_id =task0.0;
-			debug_assert!(b_id==0);
+
+			TasksProposalList::<T>::mutate(task_owner.clone(),b_id,|val|{
+				let mut proposal = val.clone().unwrap();
+				proposal.approved = SK::Approvals::AWAITINGCURATOR;
+				*val = Some(proposal.clone());
+			});
+			
 			//Assess that the id is linked to a created bounty, not yet approved
 			let bounty = Bount::Pallet::<T>::bounties(b_id);
 			ensure!(bounty.is_some(), Error::<T>::NotAnExistingTask);

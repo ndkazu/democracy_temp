@@ -69,10 +69,10 @@ At the moment The Front-End only convers extrinsics of the Skills pallet:
 
 - `submit_skill`
 - `add_my_skills`
-  
+
   They are demonstrated in the following Youtube video: https://youtu.be/KCsrnkx4uj8?si=Jkby6887Umj7z6v6 .
   the tests file in the folder `pallets/market/src/tests.rs` shows an example of successful workflow.
-  You can also use Polkadot.js to replicate this workflow.
+  You can also use Polkadot-JS to replicate this workflow.
 
 For the Front-End, you will need to go under the `FrontEnd` folder, and run `npm install` before following the instructions given in the ReadMe file, located in the same folder.
 
@@ -141,7 +141,7 @@ After you start the node template locally, you can interact with it using the ho
 A hosted version is also available on [IPFS (redirect) here](https://dotapps.io/) or [IPNS (direct) here](ipns://dotapps.io/?rpc=ws%3A%2F%2F127.0.0.1%3A9944#/explorer).
 You can also find the source code and instructions for hosting your own instance on the [polkadot-js/apps](https://github.com/polkadot-js/apps) repository.
 
-### Polkadot.JS calls
+### Polkadot-JS calls
 
 The series of calls below can be used to replicate a successful worflow:
 
@@ -183,9 +183,21 @@ We need "Funded" status for the proposal at this point:
 Go to the Governance tab-->boounties --> takes 1_min
 
 - Council(Alice) propose the curator suggested by Eve for review to the council
-  `0x0904e659a7a1628cdd93febc04a4e0646ea20e9f5f0ce097d9a05290d4a9e054df4e` => Succeeds in tests, Fails in Polkadot.js
+  `0x0904e659a7a1628cdd93febc04a4e0646ea20e9f5f0ce097d9a05290d4a9e054df4e`
 
 - Curator (Bob_Stash) accepts role => Coming soon, available in tests
+  `0x0905e659a7a1628cdd93febc04a4e0646ea20e9f5f0ce097d9a05290d4a9e054df4e`
+
+- Worker (Ferdie) pick the task
+  `0x0908e659a7a1628cdd93febc04a4e0646ea20e9f5f0ce097d9a05290d4a9e054df4e`
+
+- After task completion (Confirmed off-chain), Curator (Bob-Stash) rewards Worker (Ferdie)
+  `0x090ae659a7a1628cdd93febc04a4e0646ea20e9f5f0ce097d9a05290d4a9e054df4e1cbd2d43530a44705ad088af313e18f80b53ef16b36177cd4b77b846f2a5f07c`
+
+- Worker (Ferdie) claims reward
+  `0x0909e659a7a1628cdd93febc04a4e0646ea20e9f5f0ce097d9a05290d4a9e054df4e`
+
+If you you the Front-End running, you can actually see the employee worker profile being updated, in particular the number of _SP_ points.
 
 ### Multi-Node Local Testnet
 

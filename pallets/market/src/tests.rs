@@ -85,8 +85,11 @@ println!("Dave skills:{:?}",dave_skills);
 
 // Eve submits a task proposal
 assert_ok!(MarketModule::propose_task(RuntimeOrigin::signed(EVE), 0, 500, metadata5, RICHARD));
+
+
+
 // EVE add another skill to the task
-assert_ok!(MarketModule::additional_task_skills(RuntimeOrigin::signed(EVE), 0, 1));
+//assert_ok!(MarketModule::additional_task_skills(RuntimeOrigin::signed(EVE), 0, 1));
 
 
 //Council votes on Eve proposal
@@ -111,7 +114,13 @@ next_block();
 b_status = Bounties::bounties(0).unwrap().get_status();
 println!("the Bounty status is: {:?}",b_status);
 
-assert_ok!(MarketModule::propose_curator(RuntimeOrigin::signed(council[0].clone()), EVE));
+//Does not return anything in Polkadot-JS-----------------------------------------
+let prop = MarketModule::get_proposal(EVE, 0).unwrap();
+println!("\nTask Proposal infos->curator:{:?}",prop.curator);
+//Does not return anything in Polkadot-JS-----------------------------------------
+
+
+assert_ok!(MarketModule::propose_curator(RuntimeOrigin::signed(ALICE.clone()), EVE));
 b_status = Bounties::bounties(0).unwrap().get_status();
 println!("the Bounty status is: {:?}",b_status);
 
