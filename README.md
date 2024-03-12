@@ -197,7 +197,7 @@ Go to the Governance tab-->boounties --> takes 1_min
 - Worker (Ferdie) claims reward
   `0x0909e659a7a1628cdd93febc04a4e0646ea20e9f5f0ce097d9a05290d4a9e054df4e`
 
-If you you the Front-End running, you can actually see the employee worker profile being updated, in particular the number of _SP_ points.
+If you you the Front-End running, you can actually see the employee worker profile being updated, in particular the number of _SP_ points and the _Unverified_Skill_ changing to _Verified_Skill_ .
 
 ### Multi-Node Local Testnet
 
