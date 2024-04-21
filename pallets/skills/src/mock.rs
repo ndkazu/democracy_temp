@@ -75,6 +75,7 @@ impl frame_system::Config for Test {
 parameter_types! {
 	pub const BasicWage: Balance = 50;
 	pub const CheckPeriod: BlockNumber = 5;
+	pub SkillLifetime: BlockNumber = 10;
 	#[derive(Clone)]
 	pub const MaxSkills: u32 = 128;
 }
@@ -86,6 +87,7 @@ impl pallet_skills::Config for Test {
 	type Currency = Balances;
 	type CheckPeriod = CheckPeriod;
 	type MaxSkills = MaxSkills;
+	type SkillLifetime = SkillLifetime;
 	type CouncilOrigin = pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollective, 1, 2>;
 }
 

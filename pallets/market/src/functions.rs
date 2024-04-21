@@ -249,6 +249,9 @@ pub fn upgrade_employee(account: T::AccountId,task_owner: T::AccountId) -> Dispa
             SK::UserVerifiedSkills::mutate(account.clone(),|list: &mut pallet_skills::BoundedVec<SK::Skill<T>, _>|{
                 list.try_push(sk.clone()).map_err(|_| "Max number of skills reached").ok();
             });
+
+            let skill_counter = SK::VskillCounter::<T>::new();
+            SK::SkillTimeCounter::<T>::insert(account.clone(), sk.clone(), skill_counter);
            
             let test = employee_skills_unv.clone().contains(&sk);
 
@@ -256,15 +259,24 @@ pub fn upgrade_employee(account: T::AccountId,task_owner: T::AccountId) -> Dispa
                 true => {
                     employee_skills_unv.retain(|x| *x!=sk.clone());
 
-                    let mut new_bvec: BoundedVec<SK::Skill<T>,T::MaxSkills>= BoundedVec::truncate_from(employee_skills_unv.clone());
+                    let new_bvec: BoundedVec<SK::Skill<T>,T::MaxSkills>= BoundedVec::truncate_from(employee_skills_unv.clone());
                     SK::UserUnverifiedSkills::mutate(account.clone(),|list: &mut pallet_skills::BoundedVec<SK::Skill<T>, _>|{
                        *list=new_bvec;
                     });
                 },
                 false => ()
-            }
-           
+            }           
         }
+        //Reset Lifetime counter for skills that have been used
+        SK::SkillTimeCounter::<T>::mutate(account.clone(),sk,|val|{
+            let mut s_counter=val.clone().unwrap();
+            let counter = s_counter.counter;
+            if counter.is_zero()==false {
+                s_counter.counter=s_counter.counter.saturating_sub(s_counter.counter);
+                *val = Some(s_counter);
+            }
+
+        });
 
     }
 

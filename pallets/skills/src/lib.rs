@@ -53,6 +53,8 @@ pub mod pallet {
 		type CheckPeriod: Get<BlockNumberFor<Self>>;
 		#[pallet::constant]
 		type MaxSkills: Get<u32>+Clone;
+		#[pallet::constant]
+		type SkillLifetime: Get<BlockNumberFor<Self>>;
 	}
 
 	// The pallet's runtime storage items.
