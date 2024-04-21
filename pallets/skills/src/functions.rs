@@ -1,5 +1,5 @@
 pub use super::*;
-
+use sp_runtime::Percent;
 impl<T: Config> Pallet<T> {
 
     //Helper function for skill approval
@@ -187,26 +187,30 @@ impl<T: Config> Pallet<T> {
 	}
 
 	
+	pub fn increase_wage(account:AccountIdOf<T>, mut employee:Employee<T>, increase:bool)-> DispatchResultWithPostInfo{
+		let sp_diff = T::Sp::get();
+		let old_xp = employee.xp;
+		let new_xp = employee.sp%sp_diff;
+		
+	   if increase==true && new_xp>old_xp{   
+		employee.xp = new_xp;
+		employee.wage =employee.wage.saturating_add(Percent::from_percent(new_xp as u8).mul_floor(employee.wage)) ;
+	  
+	   }else{
+		employee.wage =employee.wage.saturating_sub(Percent::from_percent(old_xp as u8).mul_floor(employee.wage)) ;
+	   }
+		
+	
+	   EmployeeLog::<T>::mutate(account.clone(),|val|{
+		*val = Some(employee);
+	   });
+		Ok(().into())
+	}
 
     pub fn begin_block(now: BlockNumberOf<T>) -> Weight{
 		let max_block_weight = Weight::from_parts(1000_u64,0);
 		if (now % T::CheckPeriod::get()).is_zero(){
-			let employees:Vec<_> = SkillTimeCounter::<T>::iter().collect();
-			//Demote verified skills that have not been used within their lifetime
-			for i in employees{
-				let mut counter=i.2.counter;
-				let now = <frame_system::Pallet<T>>::block_number();
-				counter = counter.saturating_add(now);
-				let limit = T::SkillLifetime::get();
-				if counter>limit{
-					UserUnverifiedSkills::<T>::mutate(i.0.clone(), |val|{
-						let mut skills = val.clone();
-						skills.try_push(i.1.clone()).map_err(|_| "Max number of skills reached").ok();
-						*val = skills;
-					});
-				}
-
-			}
+			
 			let proposal_iter = SkillsProposalList::<T>::iter();
 			for proposal_all in proposal_iter{
 				let test = (proposal_all.1.session_closed,proposal_all.1.approved); 

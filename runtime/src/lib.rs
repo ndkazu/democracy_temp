@@ -353,6 +353,9 @@ parameter_types!{
 	pub const SkillLifetime: BlockNumber = 3 * 30 * DAYS;
 	#[derive(Clone)]
 	pub const MaxSkills: u32 = 128;
+	//Every sp increase with an amount equal to xp_bonus, trigger 
+	pub const xp_bonus: u32 = 1;
+	pub const sp_trigger:u32 = 5;
 }
 impl pallet_skills::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
@@ -364,21 +367,16 @@ impl pallet_skills::Config for Runtime {
 	type MaxSkills = MaxSkills;
 	type SkillLifetime = SkillLifetime;
 	type CouncilOrigin = pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollective, 1, 2>;
-
+	type Sp = sp_trigger;
+	type Xp = xp_bonus;
 }
 
 
-parameter_types!{
-	//Every sp increase with an amount equal to xp_bonus, trigger 
-	pub const xp_bonus: u32 = 1;
-	pub const sp_trigger:u32 = 5;
-	
-}
+
 impl pallet_market::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type RuntimeCall = RuntimeCall;
-	type Sp = sp_trigger;
-	type Xp = xp_bonus;
+	
 }
 
 parameter_types! {

@@ -66,6 +66,8 @@ parameter_types! {
 	pub const BasicWage: Balance = 50;
 	pub const CheckPeriod: BlockNumber = 5;
 	pub const SkillLifetime: BlockNumber = 10;
+	pub const xp_bonus: u32 = 1;
+	pub const sp_trigger:u32 = 5;
 	#[derive(Clone)]
 	pub const MaxSkills: u32 = 128;
 }
@@ -78,6 +80,8 @@ impl pallet_skills::Config for Test {
 	type CheckPeriod = CheckPeriod;
 	type MaxSkills = MaxSkills;
 	type SkillLifetime = SkillLifetime;
+	type Sp = sp_trigger;
+	type Xp = xp_bonus;
 	type CouncilOrigin = pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollective, 1, 2>;
 }
 
@@ -230,17 +234,11 @@ impl pallet_treasury::Config for Test {
 	type BenchmarkHelper = ();
 }
 
-parameter_types!{
-	//Every sp increase with an amount equal to xp_bonus, trigger 
-	pub const xp_bonus: u32 = 1;
-	pub const sp_trigger:u32 = 5;
-	
-}
+
 impl pallet_market::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type RuntimeCall = RuntimeCall;
-	type Sp = sp_trigger;
-	type Xp = xp_bonus;
+
 }
 
 

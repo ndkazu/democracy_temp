@@ -1,4 +1,5 @@
 use sp_runtime::Percent;
+use SK::Employee;
 
 pub use super::*;
 impl<T: Config> Pallet<T> {
@@ -281,25 +282,39 @@ pub fn upgrade_employee(account: T::AccountId,task_owner: T::AccountId) -> Dispa
     }
 
     //Upgrade employee xp
-    let sp = T::Sp::get();
-    let xp = T::Xp::get();
-   if employee.sp>old_sp {
-    let new_xp = employee.sp.saturating_sub(old_sp)%sp;
-    employee.xp = new_xp;
-    employee.wage =employee.wage.saturating_add(Percent::from_percent(new_xp as u8).mul_floor(employee.wage)) ;
-   }
-
-   SK::EmployeeLog::<T>::mutate(account.clone(),|val|{
-    *val = Some(employee);
-   });
-
+    SK::Pallet::<T>::increase_wage(account, employee,true).map_err(|_| "Couldn't Update employee wage").ok();
+    
     Ok(().into())
 }
+
 
 
 pub fn begin_block(now: BlockNumberOf<T>) -> Weight{
     let max_block_weight = Weight::from_parts(1000_u64,0);
     if (now % T::CheckPeriod::get()).is_zero(){
+        let employees:Vec<_> = SK::SkillTimeCounter::<T>::iter().collect();
+			//Demote verified skills that have not been used within their lifetime
+			for i in employees{
+				let mut counter=i.clone().2.counter;
+				let now = <frame_system::Pallet<T>>::block_number();
+				counter = counter.saturating_add(now);
+				let limit = T::SkillLifetime::get();
+				if counter>limit{
+					SK::UserUnverifiedSkills::<T>::mutate(i.clone().0, |val|{
+						let mut skills = val.clone();
+						skills.try_push(i.clone().1).map_err(|_| "Max number of skills reached").ok();
+						*val = skills;
+					});
+					let mut employee = SK::Pallet::<T>::employee(i.clone().0).unwrap();
+					
+					let skill_level = i.1.skill_level;
+                    let skill_pts= Self::calculate_sp(skill_level);
+                    employee.sp = employee.sp.saturating_sub(skill_pts); 
+					SK::Pallet::<T>::increase_wage(i.clone().0,employee,false).map_err(|_| "Couldn't update the wage").ok();
+				}
+
+			}
+
         let proposal_iter = TasksProposalList::<T>::iter();
         for proposal_all in proposal_iter{
             let test = (proposal_all.2.session_closed,proposal_all.2.approved); 
