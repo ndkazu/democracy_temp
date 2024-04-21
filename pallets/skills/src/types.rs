@@ -78,6 +78,23 @@ impl<T:Config>Skill<T>{
 	}
 }
 
+#[derive(Clone, Encode, Decode, Default, PartialEq, Eq, TypeInfo, MaxEncodedLen,RuntimeDebugNoBound)]
+#[scale_info(skip_type_params(T))]
+pub struct VskillCounter<T: Config>{
+	pub verified_when: BlockNumberOf<T>,
+	pub counter: BlockNumberOf<T>,
+}
+
+impl<T:Config>VskillCounter<T>{
+	pub fn new() -> Self{
+		let verified_when = <frame_system::Pallet<T>>::block_number();
+		let counter = verified_when.saturating_sub(verified_when);
+		let v_skill = VskillCounter{verified_when,counter};
+		
+		v_skill
+	}
+}
+
 #[derive(Clone, Encode, Decode, Default, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 #[scale_info(skip_type_params(T))]
 #[cfg_attr(feature = "std", derive(Debug))]

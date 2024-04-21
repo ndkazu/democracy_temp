@@ -38,7 +38,7 @@ impl<T: Config> Pallet<T> {
 
 
 
-    //Helper function for skill approval
+    //Helper function for skill rejection
     pub fn reject_skill_helper(from_who:T::AccountId) -> DispatchResultWithPostInfo{
         let skills = SkillsApprovalList::<T>::iter();
         

@@ -81,12 +81,10 @@ pub fn get_task_infos(account: T::AccountId) -> Option<(Bount::BountyIndex,TaskP
     let task_iter = TasksProposalList::<T>::iter();
 			
             let mut task0:Option<(u32,TaskProposal<T>)>=None;
-            let mut id =0;
 			for task in task_iter{                
             if task.0==account{
                 let taskk=task.2;
-                id = task.1;
-                task0 = Some((id,taskk));
+                task0 = Some((task.1,taskk));
                 break
             }
             }

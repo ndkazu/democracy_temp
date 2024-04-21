@@ -72,6 +72,13 @@ pub mod pallet {
 	#[pallet::getter(fn proposals)]
 	pub type ProposalsNumber<T> = StorageValue<_, u32, ValueQuery, InitTotalMembers<T>>;
 
+	
+	//Verified skills lifetime counter
+	#[pallet::storage]
+	#[pallet::getter(fn user_skill_counter)]
+	pub type SkillTimeCounter<T> = 
+		StorageDoubleMap<_,Twox64Concat,AccountIdOf<T>,Twox64Concat,Skill<T>,VskillCounter<T>,OptionQuery>;
+	
 
 	// Total number of employees
 	#[pallet::storage]
