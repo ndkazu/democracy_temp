@@ -31,6 +31,10 @@ fn employee_test(){
         //create a new employee
         assert_ok!(SkillsModule::new_employee(RuntimeOrigin::signed(council[0].clone()),RICHARD,metadata0));
 
+		assert_ok!(SkillsModule::set_budget(RuntimeOrigin::root().into()));
+		let budget_account = <Test as Config>::BudgetAccount::get().into_account_truncating();
+		let bal = Balances::free_balance(&budget_account);
+		assert_eq!(bal,1000000);
         //Employee propose a new skill
 		assert_ok!(SkillsModule::submit_skill(RuntimeOrigin::signed(RICHARD), metadata1.clone(), Stype::Technical, SLevel::Level3));
 		let proposal = SkillsModule::get_proposal(RICHARD).unwrap();

@@ -27,7 +27,7 @@ pub mod pallet {
 use super::*;
 	//use frame_support::pallet_prelude::*;
 	//use frame_system::pallet_prelude::*;
-
+	use sp_std::fmt::Debug;
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
 
@@ -142,7 +142,23 @@ use super::*;
 	pub type SkillsProposalList<T: Config> =
 	StorageMap<_, Twox64Concat, AccountIdOf<T>,SkillProposal<T>,OptionQuery>;
 
+/*	#[pallet::genesis_config]
+    #[derive(frame_support::DefaultNoBound)]
+	pub struct GenesisConfig<T: Config>{
 
+		pub amount: T::Balance,
+	}
+
+	#[pallet::genesis_build]
+	impl<T:Config> BuildGenesisConfig for GenesisConfig<T>{
+		fn build(&self) {
+			let account = T::BudgetAccount::get().into_account_truncating();
+			
+			BALANCES::Pallet::<T>::force_set_balance(frame_system::RawOrigin::Root.into(), account, self.amount).unwrap();
+
+		}
+	}
+*/
 	// Pallets use events to inform users when important changes are made.
 	// https://docs.substrate.io/main-docs/build/events-errors/
 	#[pallet::event]
@@ -184,22 +200,6 @@ use super::*;
 		ProposalDoesNotExist,
 	}
 
-	#[pallet::genesis_config]
-    #[derive(frame_support::DefaultNoBound)]
-	pub struct GenesisConfig<T: Config>{
-
-		pub amount: T::Balance,
-	}
-
-	#[pallet::genesis_build]
-	impl<T:Config> BuildGenesisConfig for GenesisConfig<T>{
-		fn build(&self) {
-			let account = T::BudgetAccount::get().into_account_truncating();
-			
-			let _=BALANCES::Pallet::<T>::force_set_balance(frame_system::RawOrigin::Root.into(), account, self.amount);
-
-		}
-	}
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
@@ -375,5 +375,17 @@ use super::*;
 			Ok(().into())
 		}
 
+		#[pallet::call_index(7)]
+		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1).ref_time())]
+		pub fn set_budget(origin:OriginFor<T>)-> DispatchResultWithPostInfo{
+			let caller = ensure_root(origin.clone());
+			let amount0 = T::InitialBudget::get();
+			let a128:u128= amount0.try_into().ok().unwrap();
+			let amount: T::Balance= a128.try_into().ok().unwrap();
+			let account = T::BudgetAccount::get().into_account_truncating();
+			BALANCES::Pallet::<T>::force_set_balance(frame_system::RawOrigin::Root.into(),account,amount).unwrap();
+			
+			Ok(().into())
+		}
 	}
 }
