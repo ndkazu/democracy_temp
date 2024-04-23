@@ -17,11 +17,14 @@ mod types;
 mod functions;
 pub use types::*;
 pub use pallet_collective as Coll;
+pub use pallet_balances as BALANCES;
 use Coll::Instance1;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use super::*;
+	//use Coll::GenesisConfig;
+
+use super::*;
 	//use frame_support::pallet_prelude::*;
 	//use frame_system::pallet_prelude::*;
 
@@ -32,7 +35,7 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: 
 	frame_system::Config
-	+ Coll::Config<Instance1> {
+	+ Coll::Config<Instance1>+BALANCES::Config {
 		/// Because this pallet emits events, it depends on the runtime's definition of an event.
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 		type Currency: ReservableCurrency<Self::AccountId>;
@@ -57,9 +60,12 @@ pub mod pallet {
 		type SkillLifetime: Get<BlockNumberFor<Self>>;
 		#[pallet::constant]
 		type Sp: Get<u32>;
-
 		#[pallet::constant]
 		type Xp: Get<u32>;
+		#[pallet::constant]
+		type BudgetAccount: Get<PalletId>;
+		#[pallet::constant]
+		type InitialBudget: Get<BalanceOf<Self>>;
 
 	}
 
@@ -176,6 +182,23 @@ pub mod pallet {
 		NotACouncilMember,
 		/// The Proposal does not exist
 		ProposalDoesNotExist,
+	}
+
+	#[pallet::genesis_config]
+    #[derive(frame_support::DefaultNoBound)]
+	pub struct GenesisConfig<T: Config>{
+
+		pub amount: T::Balance,
+	}
+
+	#[pallet::genesis_build]
+	impl<T:Config> BuildGenesisConfig for GenesisConfig<T>{
+		fn build(&self) {
+			let account = T::BudgetAccount::get().into_account_truncating();
+			
+			let _=BALANCES::Pallet::<T>::force_set_balance(frame_system::RawOrigin::Root.into(), account, self.amount);
+
+		}
 	}
 
 	#[pallet::hooks]

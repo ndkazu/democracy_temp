@@ -356,6 +356,8 @@ parameter_types!{
 	//Every sp increase with an amount equal to xp_bonus, trigger 
 	pub const xp_bonus: u32 = 1;
 	pub const sp_trigger:u32 = 5;
+	pub const BudgetAccount:PalletId = PalletId(*b"budget_0");
+	pub const InitialBudget: Balance = 2000000000000 * DOLLARS;
 }
 impl pallet_skills::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
@@ -369,6 +371,8 @@ impl pallet_skills::Config for Runtime {
 	type CouncilOrigin = pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollective, 1, 2>;
 	type Sp = sp_trigger;
 	type Xp = xp_bonus;
+	type BudgetAccount = BudgetAccount;
+	type InitialBudget = InitialBudget;
 }
 
 

@@ -119,5 +119,10 @@ fn testnet_genesis(
 				get_account_id_from_seed::<sr25519::Public>("Alice"),
 				get_account_id_from_seed::<sr25519::Public>("Charlie"),
 			]},
+		"skillsModule": {
+			"amount":500000000000000000000u128 
+		},
+
+		
 	})
 }
