@@ -66,6 +66,7 @@ use super::*;
 		type BudgetAccount: Get<PalletId>;
 		#[pallet::constant]
 		type InitialBudget: Get<BalanceOf<Self>>;
+		type CheckCycle: Get<BlockNumberFor<Self>>;
 
 	}
 

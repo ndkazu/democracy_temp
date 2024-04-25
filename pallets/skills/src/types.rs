@@ -105,16 +105,19 @@ pub struct Employee<T:Config>{
 	pub xp:u32,
 	pub wage: BalanceOf<T>,
 	pub creation_block: BlockNumberOf<T>,
+	//Payed salary cycles number
+	pub payment_cycle:u128,
 }
 impl<T:Config>Employee<T>{
 	pub fn new(account:T::AccountId, name:BoundedVecOf<T>) -> Self{
 		let uid = EmployeesNumber::<T>::get();
 		let sp = 0;
 		let xp = 0;
+		let payment_cycle=0;
 		let wage = T::BasicWage::get();
 		let creation_block  = <frame_system::Pallet<T>>::block_number();
 
-		let new_employee = Employee{name,uid,sp,xp,wage,creation_block};
+		let new_employee = Employee{name,uid,sp,xp,wage,creation_block,payment_cycle};
 		EmployeeLog::<T>::insert(account,&new_employee);
 		EmployeesNumber::<T>::put(uid.saturating_add(1));
 

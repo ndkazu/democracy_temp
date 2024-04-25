@@ -347,7 +347,10 @@ impl pallet_treasury::Config for Runtime {
 
 
 parameter_types!{
-	pub const BasicWage: Balance = 49 * DOLLARS;
+	//block wage
+	pub const BasicWage: Balance = (49 * DOLLARS).saturating_div(600);
+	//Multiply this by the block wage to get the salary for 1 cycle
+	pub const CheckCycle:BlockNumber = 30*DAYS;
 	pub const CheckPeriod: BlockNumber = MINUTES;
 	//A verified skill must be used at least once within its life time or it will be demoted to unverified
 	pub const SkillLifetime: BlockNumber = 3 * 30 * DAYS;
@@ -373,6 +376,7 @@ impl pallet_skills::Config for Runtime {
 	type Xp = xp_bonus;
 	type BudgetAccount = BudgetAccount;
 	type InitialBudget = InitialBudget;
+	type CheckCycle = CheckCycle;
 }
 
 

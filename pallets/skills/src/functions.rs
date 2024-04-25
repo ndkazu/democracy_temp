@@ -1,5 +1,7 @@
+
 pub use super::*;
-use sp_runtime::Percent;
+use sp_runtime::{traits::Lookup, Percent};
+use frame_support::traits::OriginTrait;
 impl<T: Config> Pallet<T> {
 
     //Helper function for skill approval
@@ -209,6 +211,48 @@ impl<T: Config> Pallet<T> {
 
     pub fn begin_block(now: BlockNumberOf<T>) -> Weight{
 		let max_block_weight = Weight::from_parts(1000_u64,0);
+		let pay_cycle= T::CheckCycle::get();
+		if (now%pay_cycle).is_zero(){
+			//get list of employees
+			let employees:Vec<_> = EmployeeLog::<T>::iter().collect();
+
+			//Convert the duration of a payment cycle into u128
+			let pcycle0:u128=pay_cycle.try_into().ok().unwrap();
+
+			let now0:u128 = now.try_into().ok().unwrap();
+			
+			//calculate number of payment cycles so far(pcycle0)
+			let cycle0 = now0.saturating_div(pcycle0);
+
+			for employee in employees{
+				let mut emp= employee.1.clone();
+				let salary0 = emp.wage;
+				let s0:u128= salary0.try_into().ok().unwrap();
+				let mut salary: T::Balance =s0.try_into().ok().unwrap();
+
+				//calculate the cycle based salary
+				salary = salary.saturating_mul(pcycle0.try_into().ok().unwrap());
+
+				
+
+				
+				let payment_fund: T::AccountId = T::BudgetAccount::get().into_account_truncating();
+				//pay employee if there is enough money in the fund
+				let fund_bal = BALANCES::Pallet::<T>::free_balance(&employee.0);
+				if fund_bal>salary{
+
+					while emp.payment_cycle<cycle0 && fund_bal>salary {
+					let dest= <T as frame_system::Config>::Lookup::unlookup(employee.clone().0);
+					BALANCES::Pallet::<T>::transfer_keep_alive(<T as frame_system::Config>::RuntimeOrigin::signed(payment_fund.clone()), dest, salary).ok();
+					emp.payment_cycle=emp.payment_cycle+1;
+				}				
+				}
+				//Update payed cycles number in employee's profile
+				EmployeeLog::<T>::mutate(employee.clone().0,|val|{
+					*val=Some(emp);
+				});
+			}
+		}
 		if (now % T::CheckPeriod::get()).is_zero(){
 			
 			let proposal_iter = SkillsProposalList::<T>::iter();
