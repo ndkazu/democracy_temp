@@ -238,9 +238,10 @@ impl<T: Config> Pallet<T> {
 				
 				let payment_fund: T::AccountId = T::BudgetAccount::get().into_account_truncating();
 				//pay employee if there is enough money in the fund
-				let fund_bal = BALANCES::Pallet::<T>::free_balance(&employee.0);
+				let fund_bal = BALANCES::Pallet::<T>::free_balance(&payment_fund);
+				//debug_assert!(fund_bal>salary,"The salary is greater than the fund!!!");
 				if fund_bal>salary{
-
+					//debug_assert!(emp.payment_cycle<cycle0, "payment cycles are up-to-date!");
 					while emp.payment_cycle<cycle0 && fund_bal>salary {
 					let dest= <T as frame_system::Config>::Lookup::unlookup(employee.clone().0);
 					BALANCES::Pallet::<T>::transfer_keep_alive(<T as frame_system::Config>::RuntimeOrigin::signed(payment_fund.clone()), dest, salary).ok();

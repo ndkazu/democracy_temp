@@ -72,6 +72,7 @@ parameter_types! {
 	pub const InitialBudget: Balance = 1000000;
 	#[derive(Clone)]
 	pub const MaxSkills: u32 = 128;
+	pub const CheckCycle: BlockNumber=60;
 }
 impl pallet_skills::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
@@ -87,6 +88,7 @@ impl pallet_skills::Config for Test {
 	type BudgetAccount = BudgetAccount;
 	type InitialBudget = InitialBudget;
 	type CouncilOrigin = pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollective, 1, 2>;
+	type CheckCycle = CheckCycle;
 }
 
 

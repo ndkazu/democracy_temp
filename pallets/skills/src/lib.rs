@@ -379,7 +379,12 @@ use super::*;
 		#[pallet::call_index(7)]
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1).ref_time())]
 		pub fn set_budget(origin:OriginFor<T>)-> DispatchResultWithPostInfo{
-			let caller = ensure_root(origin.clone());
+			let caller = ensure_signed(origin.clone())?;
+			ensure!(
+				Coll::Pallet::<T, Instance1>::members().contains(&caller),
+				Error::<T>::NotACouncilMember
+			);
+
 			let amount0 = T::InitialBudget::get();
 			let a128:u128= amount0.try_into().ok().unwrap();
 			let amount: T::Balance= a128.try_into().ok().unwrap();
