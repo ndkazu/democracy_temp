@@ -31,6 +31,24 @@ fn employee_test(){
         //create a new employee
         assert_ok!(SkillsModule::new_employee(RuntimeOrigin::signed(council[0].clone()),RICHARD,metadata0));
 
+		//Get a budget for Salaries payments
+		assert_ok!(SkillsModule::set_budget(RuntimeOrigin::signed(council[0].clone())));
+		let budget_account = <Test as Config>::BudgetAccount::get().into_account_truncating();
+		let bal = Balances::free_balance(&budget_account);
+		assert_eq!(bal,10_000_000_000*BSX);
+
+		//richard initial balance
+		let rich_bal = Balances::free_balance(&RICHARD);
+		let mut now = System::block_number();
+		println!("the blocknumber is: {:?}\n",now);
+		now = System::block_number().saturating_mul(<Test as Config>::CheckCycle::get());
+		println!("the new blocknumber is: {:?}\n",now);
+		fast_forward_to(now);
+		assert_ne!(rich_bal,Balances::free_balance(&RICHARD));
+		println!("Richard balance:{:?}",Balances::free_balance(&RICHARD));
+		
+		
+
         //Employee propose a new skill
 		assert_ok!(SkillsModule::submit_skill(RuntimeOrigin::signed(RICHARD), metadata1.clone(), Stype::Technical, SLevel::Level3));
 		let proposal = SkillsModule::get_proposal(RICHARD).unwrap();
@@ -40,7 +58,7 @@ fn employee_test(){
 		assert_ok!(SkillsModule::council_vote(RuntimeOrigin::signed(council[2].clone()), RICHARD, true));
 		assert_ok!(SkillsModule::council_close(RuntimeOrigin::signed(council[2].clone()), RICHARD));
 
-		let mut now = System::block_number();
+		
 		expect_events(vec![
 			RuntimeEvent::SkillsModule(Event::CouncilSessionClosed{ 
 				who: council[2].clone(), 
@@ -56,6 +74,7 @@ fn employee_test(){
 		let  event_ref = 
 		record(RuntimeEvent::SkillsModule(Event::NewSkillCreated{when: System::block_number(), what: metadata1}));
 		assert_eq!(true,System::events().contains(&event_ref));
+
 		
 		now = System::block_number().saturating_mul(<Test as Config>::CheckPeriod::get());
 		fast_forward_to(now);

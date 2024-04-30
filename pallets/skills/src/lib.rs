@@ -17,14 +17,17 @@ mod types;
 mod functions;
 pub use types::*;
 pub use pallet_collective as Coll;
+pub use pallet_balances as BALANCES;
 use Coll::Instance1;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use super::*;
+	//use Coll::GenesisConfig;
+
+use super::*;
 	//use frame_support::pallet_prelude::*;
 	//use frame_system::pallet_prelude::*;
-
+	use sp_std::fmt::Debug;
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
 
@@ -32,7 +35,7 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: 
 	frame_system::Config
-	+ Coll::Config<Instance1> {
+	+ Coll::Config<Instance1>+BALANCES::Config {
 		/// Because this pallet emits events, it depends on the runtime's definition of an event.
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 		type Currency: ReservableCurrency<Self::AccountId>;
@@ -53,6 +56,18 @@ pub mod pallet {
 		type CheckPeriod: Get<BlockNumberFor<Self>>;
 		#[pallet::constant]
 		type MaxSkills: Get<u32>+Clone;
+		#[pallet::constant]
+		type SkillLifetime: Get<BlockNumberFor<Self>>;
+		#[pallet::constant]
+		type Sp: Get<u32>;
+		#[pallet::constant]
+		type Xp: Get<u32>;
+		#[pallet::constant]
+		type BudgetAccount: Get<PalletId>;
+		#[pallet::constant]
+		type InitialBudget: Get<BalanceOf<Self>>;
+		type CheckCycle: Get<BlockNumberFor<Self>>;
+
 	}
 
 	// The pallet's runtime storage items.
@@ -72,6 +87,13 @@ pub mod pallet {
 	#[pallet::getter(fn proposals)]
 	pub type ProposalsNumber<T> = StorageValue<_, u32, ValueQuery, InitTotalMembers<T>>;
 
+	
+	//Verified skills lifetime counter
+	#[pallet::storage]
+	#[pallet::getter(fn user_skill_counter)]
+	pub type SkillTimeCounter<T> = 
+		StorageDoubleMap<_,Twox64Concat,AccountIdOf<T>,Twox64Concat,Skill<T>,VskillCounter<T>,OptionQuery>;
+	
 
 	// Total number of employees
 	#[pallet::storage]
@@ -121,7 +143,23 @@ pub mod pallet {
 	pub type SkillsProposalList<T: Config> =
 	StorageMap<_, Twox64Concat, AccountIdOf<T>,SkillProposal<T>,OptionQuery>;
 
+/*	#[pallet::genesis_config]
+    #[derive(frame_support::DefaultNoBound)]
+	pub struct GenesisConfig<T: Config>{
 
+		pub amount: T::Balance,
+	}
+
+	#[pallet::genesis_build]
+	impl<T:Config> BuildGenesisConfig for GenesisConfig<T>{
+		fn build(&self) {
+			let account = T::BudgetAccount::get().into_account_truncating();
+			
+			BALANCES::Pallet::<T>::force_set_balance(frame_system::RawOrigin::Root.into(), account, self.amount).unwrap();
+
+		}
+	}
+*/
 	// Pallets use events to inform users when important changes are made.
 	// https://docs.substrate.io/main-docs/build/events-errors/
 	#[pallet::event]
@@ -162,6 +200,7 @@ pub mod pallet {
 		/// The Proposal does not exist
 		ProposalDoesNotExist,
 	}
+
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
@@ -337,5 +376,22 @@ pub mod pallet {
 			Ok(().into())
 		}
 
+		#[pallet::call_index(7)]
+		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1).ref_time())]
+		pub fn set_budget(origin:OriginFor<T>)-> DispatchResultWithPostInfo{
+			let caller = ensure_signed(origin.clone())?;
+			ensure!(
+				Coll::Pallet::<T, Instance1>::members().contains(&caller),
+				Error::<T>::NotACouncilMember
+			);
+
+			let amount0 = T::InitialBudget::get();
+			let a128:u128= amount0.try_into().ok().unwrap();
+			let amount: T::Balance= a128.try_into().ok().unwrap();
+			let account = T::BudgetAccount::get().into_account_truncating();
+			BALANCES::Pallet::<T>::force_set_balance(frame_system::RawOrigin::Root.into(),account,amount).unwrap();
+			
+			Ok(().into())
+		}
 	}
 }

@@ -58,12 +58,7 @@ pub mod pallet {
 			+ UnfilteredDispatchable<RuntimeOrigin = <Self as frame_system::Config>::RuntimeOrigin>
 			+ From<Call<Self>>
 			+ GetDispatchInfo;
-		#[pallet::constant]
-		type Sp: Get<u32>;
-
-		#[pallet::constant]
-		type Xp: Get<u32>;
-
+		
 		
 	}
 

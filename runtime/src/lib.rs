@@ -347,10 +347,20 @@ impl pallet_treasury::Config for Runtime {
 
 
 parameter_types!{
-	pub const BasicWage: Balance = 49 * DOLLARS;
+	//block wage
+	pub const BasicWage: Balance = (49 * DOLLARS).saturating_div(600);
+	//Multiply this by the block wage to get the salary for 1 cycle
+	pub const CheckCycle:BlockNumber = 30*DAYS;
 	pub const CheckPeriod: BlockNumber = MINUTES;
+	//A verified skill must be used at least once within its life time or it will be demoted to unverified
+	pub const SkillLifetime: BlockNumber = 3 * 30 * DAYS;
 	#[derive(Clone)]
 	pub const MaxSkills: u32 = 128;
+	//Every sp increase with an amount equal to xp_bonus, trigger 
+	pub const xp_bonus: u32 = 1;
+	pub const sp_trigger:u32 = 5;
+	pub const BudgetAccount:PalletId = PalletId(*b"budget_0");
+	pub const InitialBudget: Balance = 2000000000000 * DOLLARS;
 }
 impl pallet_skills::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
@@ -360,22 +370,21 @@ impl pallet_skills::Config for Runtime {
 	type Currency = Balances;
 	type CheckPeriod = CheckPeriod;
 	type MaxSkills = MaxSkills;
+	type SkillLifetime = SkillLifetime;
 	type CouncilOrigin = pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollective, 1, 2>;
-
+	type Sp = sp_trigger;
+	type Xp = xp_bonus;
+	type BudgetAccount = BudgetAccount;
+	type InitialBudget = InitialBudget;
+	type CheckCycle = CheckCycle;
 }
 
 
-parameter_types!{
-	//Every sp increase with an amount equal to xp_bonus, trigger 
-	pub const xp_bonus: u32 = 1;
-	pub const sp_trigger:u32 = 5;
-	
-}
+
 impl pallet_market::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type RuntimeCall = RuntimeCall;
-	type Sp = sp_trigger;
-	type Xp = xp_bonus;
+	
 }
 
 parameter_types! {

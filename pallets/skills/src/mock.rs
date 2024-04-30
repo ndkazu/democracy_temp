@@ -3,7 +3,7 @@ use frame_support::{
 	parameter_types,
 	derive_impl,
 	traits::{ConstU16,ConstU32,ConstU64},
-	weights::Weight,
+	weights::Weight, PalletId
 };
 use sp_core::{crypto::AccountId32, H256};
 use sp_runtime::{
@@ -73,10 +73,18 @@ impl frame_system::Config for Test {
 }
 
 parameter_types! {
-	pub const BasicWage: Balance = 50;
+	//block wage
+	pub const BasicWage: Balance = 1*BSX;
 	pub const CheckPeriod: BlockNumber = 5;
+	pub SkillLifetime: BlockNumber = 10;
+	pub const xp_bonus: u32 = 1;
+	pub const sp_trigger:u32 = 5;
 	#[derive(Clone)]
 	pub const MaxSkills: u32 = 128;
+	pub const BudgetAccount:PalletId = PalletId(*b"budget_0");
+	pub const InitialBudget: Balance = 10_000_000_000*BSX;
+	//Multiply this by the block wage to get the salary for 1 cycle
+	pub const CheckCycle: BlockNumber=60;
 }
 impl pallet_skills::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
@@ -86,7 +94,13 @@ impl pallet_skills::Config for Test {
 	type Currency = Balances;
 	type CheckPeriod = CheckPeriod;
 	type MaxSkills = MaxSkills;
+	type SkillLifetime = SkillLifetime;
+	type Sp = sp_trigger;
+	type Xp = xp_bonus;
+	type BudgetAccount = BudgetAccount;
+	type InitialBudget = InitialBudget;
 	type CouncilOrigin = pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollective, 1, 2>;
+	type CheckCycle = CheckCycle;
 }
 
 parameter_types! {

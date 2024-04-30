@@ -1,5 +1,7 @@
-pub use super::*;
 
+pub use super::*;
+use sp_runtime::{traits::Lookup, Percent};
+use frame_support::traits::OriginTrait;
 impl<T: Config> Pallet<T> {
 
     //Helper function for skill approval
@@ -38,7 +40,7 @@ impl<T: Config> Pallet<T> {
 
 
 
-    //Helper function for skill approval
+    //Helper function for skill rejection
     pub fn reject_skill_helper(from_who:T::AccountId) -> DispatchResultWithPostInfo{
         let skills = SkillsApprovalList::<T>::iter();
         
@@ -187,10 +189,73 @@ impl<T: Config> Pallet<T> {
 	}
 
 	
+	pub fn increase_wage(account:AccountIdOf<T>, mut employee:Employee<T>, increase:bool)-> DispatchResultWithPostInfo{
+		let sp_diff = T::Sp::get();
+		let old_xp = employee.xp;
+		let new_xp = employee.sp%sp_diff;
+		
+	   if increase==true && new_xp>old_xp{   
+		employee.xp = new_xp;
+		employee.wage =employee.wage.saturating_add(Percent::from_percent(new_xp as u8).mul_floor(employee.wage)) ;
+	  
+	   }else{
+		employee.wage =employee.wage.saturating_sub(Percent::from_percent(old_xp as u8).mul_floor(employee.wage)) ;
+	   }
+		
+	
+	   EmployeeLog::<T>::mutate(account.clone(),|val|{
+		*val = Some(employee);
+	   });
+		Ok(().into())
+	}
 
     pub fn begin_block(now: BlockNumberOf<T>) -> Weight{
 		let max_block_weight = Weight::from_parts(1000_u64,0);
+		let pay_cycle= T::CheckCycle::get();
+		if (now%pay_cycle).is_zero(){
+			//get list of employees
+			let employees:Vec<_> = EmployeeLog::<T>::iter().collect();
+
+			//Convert the duration of a payment cycle into u128
+			let pcycle0:u128=pay_cycle.try_into().ok().unwrap();
+
+			let now0:u128 = now.try_into().ok().unwrap();
+			
+			//calculate number of payment cycles so far(pcycle0)
+			let cycle0 = now0.saturating_div(pcycle0);
+
+			for employee in employees{
+				let mut emp= employee.1.clone();
+				let salary0 = emp.wage;
+				let s0:u128= salary0.try_into().ok().unwrap();
+				let mut salary: T::Balance =s0.try_into().ok().unwrap();
+
+				//calculate the cycle based salary
+				salary = salary.saturating_mul(pcycle0.try_into().ok().unwrap());
+
+				
+
+				
+				let payment_fund: T::AccountId = T::BudgetAccount::get().into_account_truncating();
+				//pay employee if there is enough money in the fund
+				let fund_bal = BALANCES::Pallet::<T>::free_balance(&payment_fund);
+				//debug_assert!(fund_bal>salary,"The salary is greater than the fund!!!");
+				if fund_bal>salary{
+					//debug_assert!(emp.payment_cycle<cycle0, "payment cycles are up-to-date!");
+					while emp.payment_cycle<cycle0 && fund_bal>salary {
+					let dest= <T as frame_system::Config>::Lookup::unlookup(employee.clone().0);
+					BALANCES::Pallet::<T>::transfer_keep_alive(<T as frame_system::Config>::RuntimeOrigin::signed(payment_fund.clone()), dest, salary).ok();
+					emp.payment_cycle=emp.payment_cycle+1;
+				}				
+				}
+				//Update payed cycles number in employee's profile
+				EmployeeLog::<T>::mutate(employee.clone().0,|val|{
+					*val=Some(emp);
+				});
+			}
+		}
 		if (now % T::CheckPeriod::get()).is_zero(){
+			
 			let proposal_iter = SkillsProposalList::<T>::iter();
 			for proposal_all in proposal_iter{
 				let test = (proposal_all.1.session_closed,proposal_all.1.approved); 

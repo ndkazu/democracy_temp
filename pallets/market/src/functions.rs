@@ -1,4 +1,5 @@
 use sp_runtime::Percent;
+use SK::Employee;
 
 pub use super::*;
 impl<T: Config> Pallet<T> {
@@ -81,12 +82,10 @@ pub fn get_task_infos(account: T::AccountId) -> Option<(Bount::BountyIndex,TaskP
     let task_iter = TasksProposalList::<T>::iter();
 			
             let mut task0:Option<(u32,TaskProposal<T>)>=None;
-            let mut id =0;
 			for task in task_iter{                
             if task.0==account{
                 let taskk=task.2;
-                id = task.1;
-                task0 = Some((id,taskk));
+                task0 = Some((task.1,taskk));
                 break
             }
             }
@@ -251,6 +250,9 @@ pub fn upgrade_employee(account: T::AccountId,task_owner: T::AccountId) -> Dispa
             SK::UserVerifiedSkills::mutate(account.clone(),|list: &mut pallet_skills::BoundedVec<SK::Skill<T>, _>|{
                 list.try_push(sk.clone()).map_err(|_| "Max number of skills reached").ok();
             });
+
+            let skill_counter = SK::VskillCounter::<T>::new();
+            SK::SkillTimeCounter::<T>::insert(account.clone(), sk.clone(), skill_counter);
            
             let test = employee_skills_unv.clone().contains(&sk);
 
@@ -258,38 +260,61 @@ pub fn upgrade_employee(account: T::AccountId,task_owner: T::AccountId) -> Dispa
                 true => {
                     employee_skills_unv.retain(|x| *x!=sk.clone());
 
-                    let mut new_bvec: BoundedVec<SK::Skill<T>,T::MaxSkills>= BoundedVec::truncate_from(employee_skills_unv.clone());
+                    let new_bvec: BoundedVec<SK::Skill<T>,T::MaxSkills>= BoundedVec::truncate_from(employee_skills_unv.clone());
                     SK::UserUnverifiedSkills::mutate(account.clone(),|list: &mut pallet_skills::BoundedVec<SK::Skill<T>, _>|{
                        *list=new_bvec;
                     });
                 },
                 false => ()
-            }
-           
+            }           
         }
+        //Reset Lifetime counter for skills that have been used
+        SK::SkillTimeCounter::<T>::mutate(account.clone(),sk,|val|{
+            let mut s_counter=val.clone().unwrap();
+            let counter = s_counter.counter;
+            if counter.is_zero()==false {
+                s_counter.counter=s_counter.counter.saturating_sub(s_counter.counter);
+                *val = Some(s_counter);
+            }
+
+        });
 
     }
 
     //Upgrade employee xp
-    let sp = T::Sp::get();
-    let xp = T::Xp::get();
-   if employee.sp>old_sp {
-    let new_xp = employee.sp.saturating_sub(old_sp)%sp;
-    employee.xp = new_xp;
-    employee.wage =employee.wage.saturating_add(Percent::from_percent(new_xp as u8).mul_floor(employee.wage)) ;
-   }
-
-   SK::EmployeeLog::<T>::mutate(account.clone(),|val|{
-    *val = Some(employee);
-   });
-
+    SK::Pallet::<T>::increase_wage(account, employee,true).map_err(|_| "Couldn't Update employee wage").ok();
+    
     Ok(().into())
 }
+
 
 
 pub fn begin_block(now: BlockNumberOf<T>) -> Weight{
     let max_block_weight = Weight::from_parts(1000_u64,0);
     if (now % T::CheckPeriod::get()).is_zero(){
+        let employees:Vec<_> = SK::SkillTimeCounter::<T>::iter().collect();
+			//Demote verified skills that have not been used within their lifetime
+			for i in employees{
+				let mut counter=i.clone().2.counter;
+				let now = <frame_system::Pallet<T>>::block_number();
+				counter = counter.saturating_add(now);
+				let limit = T::SkillLifetime::get();
+				if counter>limit{
+					SK::UserUnverifiedSkills::<T>::mutate(i.clone().0, |val|{
+						let mut skills = val.clone();
+						skills.try_push(i.clone().1).map_err(|_| "Max number of skills reached").ok();
+						*val = skills;
+					});
+					let mut employee = SK::Pallet::<T>::employee(i.clone().0).unwrap();
+					
+					let skill_level = i.1.skill_level;
+                    let skill_pts= Self::calculate_sp(skill_level);
+                    employee.sp = employee.sp.saturating_sub(skill_pts); 
+					SK::Pallet::<T>::increase_wage(i.clone().0,employee,false).map_err(|_| "Couldn't update the wage").ok();
+				}
+
+			}
+
         let proposal_iter = TasksProposalList::<T>::iter();
         for proposal_all in proposal_iter{
             let test = (proposal_all.2.session_closed,proposal_all.2.approved); 
