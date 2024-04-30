@@ -1,9 +1,11 @@
-use node_template_runtime::{AccountId, RuntimeGenesisConfig, Signature, WASM_BINARY};
+use node_template_runtime::{ AccountId, MaxSkills,RuntimeGenesisConfig, Signature, WASM_BINARY};
 use sc_service::ChainType;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_consensus_grandpa::AuthorityId as GrandpaId;
 use sp_core::{sr25519, Pair, Public};
 use sp_runtime::traits::{IdentifyAccount, Verify};
+use sp_runtime::BoundedVec;
+
 
 // The URL for the telemetry server.
 // const STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
@@ -50,6 +52,10 @@ pub fn development_config() -> Result<ChainSpec, String> {
 		vec![
 			get_account_id_from_seed::<sr25519::Public>("Alice"),
 			get_account_id_from_seed::<sr25519::Public>("Bob"),
+			get_account_id_from_seed::<sr25519::Public>("Charlie"),
+			get_account_id_from_seed::<sr25519::Public>("Dave"),
+			get_account_id_from_seed::<sr25519::Public>("Eve"),
+			get_account_id_from_seed::<sr25519::Public>("Ferdie"),
 			get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
 			get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
 		],
@@ -118,10 +124,15 @@ fn testnet_genesis(
 				get_account_id_from_seed::<sr25519::Public>("Bob"),
 				get_account_id_from_seed::<sr25519::Public>("Alice"),
 				get_account_id_from_seed::<sr25519::Public>("Charlie"),
-			]},/*
+			]},
 		"skillsModule": {
-			"amount":50_000_000_000_000_000_000_u128 
-		},*/
+			"employees": vec![
+				(Some(get_account_id_from_seed::<sr25519::Public>("Bob")),BoundedVec::<u8,MaxSkills>::truncate_from(b"Bob Fisher".to_vec().try_into().unwrap())),
+				(Some(get_account_id_from_seed::<sr25519::Public>("Dave")),BoundedVec::<u8,MaxSkills>::truncate_from(b"Dave Griezmann".to_vec().try_into().unwrap())),
+				(Some(get_account_id_from_seed::<sr25519::Public>("Eve")),BoundedVec::<u8,MaxSkills>::truncate_from(b"Eve Gianni".to_vec().try_into().unwrap())),
+				(Some(get_account_id_from_seed::<sr25519::Public>("Ferdie")),BoundedVec::<u8,MaxSkills>::truncate_from(b"Ferdie Zongola".to_vec().try_into().unwrap()))
+			] 
+		},
 
 		
 	})

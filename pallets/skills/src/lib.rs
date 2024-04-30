@@ -19,10 +19,12 @@ pub use types::*;
 pub use pallet_collective as Coll;
 pub use pallet_balances as BALANCES;
 use Coll::Instance1;
+use frame_support::traits::OriginTrait;
 
 #[frame_support::pallet]
 pub mod pallet {
 	//use Coll::GenesisConfig;
+
 
 use super::*;
 	//use frame_support::pallet_prelude::*;
@@ -65,7 +67,7 @@ use super::*;
 		#[pallet::constant]
 		type BudgetAccount: Get<PalletId>;
 		#[pallet::constant]
-		type InitialBudget: Get<BalanceOf<Self>>;
+		type InitialBudget: Get<<Self as BALANCES::Config>::Balance>;
 		type CheckCycle: Get<BlockNumberFor<Self>>;
 
 	}
@@ -143,23 +145,31 @@ use super::*;
 	pub type SkillsProposalList<T: Config> =
 	StorageMap<_, Twox64Concat, AccountIdOf<T>,SkillProposal<T>,OptionQuery>;
 
-/*	#[pallet::genesis_config]
+	#[pallet::genesis_config]
     #[derive(frame_support::DefaultNoBound)]
 	pub struct GenesisConfig<T: Config>{
 
-		pub amount: T::Balance,
+		pub employees: Vec<(Option<T::AccountId>,BoundedVecOf<T>)>,
 	}
 
 	#[pallet::genesis_build]
 	impl<T:Config> BuildGenesisConfig for GenesisConfig<T>{
 		fn build(&self) {
-			let account = T::BudgetAccount::get().into_account_truncating();
+			let council_member = Coll::Pallet::<T, Instance1>::members()[0].clone();
+			let origin0 = <T as frame_system::Config>::RuntimeOrigin::from(RawOrigin::Signed(council_member));
+			for i in self.employees.clone(){
+				if i.0.is_some(){
+					let employee0 = i.0.clone().unwrap();
+					crate::Pallet::<T>::new_employee(origin0.clone(),employee0,i.1.clone()).ok();
+				}
+			}
 			
-			BALANCES::Pallet::<T>::force_set_balance(frame_system::RawOrigin::Root.into(), account, self.amount).unwrap();
+			let origin = <T as frame_system::Config>::RuntimeOrigin::from(RawOrigin::Root);
+			crate::Pallet::<T>::set_budget(origin).ok();
 
 		}
 	}
-*/
+
 	// Pallets use events to inform users when important changes are made.
 	// https://docs.substrate.io/main-docs/build/events-errors/
 	#[pallet::event]
@@ -379,17 +389,12 @@ use super::*;
 		#[pallet::call_index(7)]
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1).ref_time())]
 		pub fn set_budget(origin:OriginFor<T>)-> DispatchResultWithPostInfo{
-			let caller = ensure_signed(origin.clone())?;
-			ensure!(
-				Coll::Pallet::<T, Instance1>::members().contains(&caller),
-				Error::<T>::NotACouncilMember
-			);
+			let caller = ensure_root(origin.clone())?;
 
-			let amount0 = T::InitialBudget::get();
-			let a128:u128= amount0.try_into().ok().unwrap();
-			let amount: T::Balance= a128.try_into().ok().unwrap();
-			let account = T::BudgetAccount::get().into_account_truncating();
-			BALANCES::Pallet::<T>::force_set_balance(frame_system::RawOrigin::Root.into(),account,amount).unwrap();
+			let user: T::AccountId = T::BudgetAccount::get().into_account_truncating();
+			let user_lookup = T::Lookup::unlookup(user.clone());
+			let amount0 = T::InitialBudget::get();		
+			BALANCES::Pallet::<T>::force_set_balance(origin,user_lookup,amount0).unwrap();
 			
 			Ok(().into())
 		}

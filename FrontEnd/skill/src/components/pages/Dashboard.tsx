@@ -4,7 +4,7 @@ import { BN, formatBalance } from '@polkadot/util';
 import { Card } from 'antd';
 import { NavLink } from 'react-router-dom';
 import { toUnit } from '../shared/utils';
-const treasury_address = '5EYCAe5ijiYfyeZ2JJCGq56LmPyNRAKzpG4QkoQkkQNB5e6Z';
+const treasury_address = '5EYCAe5fvqnriRZr1ZuLzaPWDmqbnXNE6D6WmExDsNQETvpr';
 
 export default function Dashboard() {
   const {
@@ -55,7 +55,7 @@ export default function Dashboard() {
         <div>
           <Card style={style1}>
             {skills.map((sk: any, index: number) => (
-              <div className="font-light">
+              <div className=" text-xl font-bold">
                 {index}-{sk.metadata}
               </div>
             ))}

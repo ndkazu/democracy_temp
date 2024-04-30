@@ -32,9 +32,10 @@ fn employee_test(){
         assert_ok!(SkillsModule::new_employee(RuntimeOrigin::signed(council[0].clone()),RICHARD,metadata0));
 
 		//Get a budget for Salaries payments
-		assert_ok!(SkillsModule::set_budget(RuntimeOrigin::signed(council[0].clone())));
+		assert_ok!(SkillsModule::set_budget(RuntimeOrigin::root()));
 		let budget_account = <Test as Config>::BudgetAccount::get().into_account_truncating();
 		let bal = Balances::free_balance(&budget_account);
+		println!("The budget account is: ${budget_account}");
 		assert_eq!(bal,10_000_000_000*BSX);
 
 		//richard initial balance

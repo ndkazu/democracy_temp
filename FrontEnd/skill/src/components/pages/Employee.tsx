@@ -79,7 +79,7 @@ export default function Employee() {
           {user_name === 'John Doe' || ver_skills.length === 0
             ? 'No verified skills'
             : ver_skills.map((skn: any) => (
-                <p className="font-light">
+                <p className=" text-green-700">
                   {skn.metadata}-{skn.skillLevel}
                 </p>
               ))}
@@ -89,7 +89,7 @@ export default function Employee() {
           {user_name === 'John Doe' || unver_skills.length === 0
             ? `No unverified skill`
             : unver_skills.map((skn: any) => (
-                <p className="font-light">
+                <p className=" text-red-600">
                   {skn.metadata}-{skn.skillLevel}
                 </p>
               ))}
