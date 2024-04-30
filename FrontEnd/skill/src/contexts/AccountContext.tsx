@@ -8,10 +8,10 @@ const initialState: AccountState = {
   user_name: '',
   ver_skills: [],
   unver_skills: [],
-  balance: undefined,
+  balance: '',
   user_sp: 0,
   user_xp: 0,
-  user_wage: undefined,
+  user_wage: '',
 };
 
 type Action =
@@ -20,10 +20,10 @@ type Action =
   | { type: 'SET_USER_NAME'; payload: string }
   | { type: 'SET_VER_SKILLS'; payload: string[] }
   | { type: 'SET_UNVER_SKILLS'; payload: string[] }
-  | { type: 'SET_BALANCE'; payload: BN }
+  | { type: 'SET_BALANCE'; payload: string }
   | { type: 'SET_SP'; payload: number }
   | { type: 'SET_XP'; payload: number }
-  | { type: 'SET_WAGE'; payload: BN };
+  | { type: 'SET_WAGE'; payload: string };
 
 function reducer(state: AccountState, action: Action): AccountState {
   switch (action.type) {

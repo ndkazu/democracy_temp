@@ -10,7 +10,7 @@ const initialState: AppState = {
   selectedAccount: undefined,
   selectedAddress: '',
   blocks: '',
-  treasury_balance: undefined,
+  treasury_balance: '',
   web3Name: undefined,
   total_employees_number: 0,
   skills: [],
@@ -22,7 +22,7 @@ type Action =
   | { type: 'SET_SELECTED_ACCOUNT'; payload: InjectedAccountWithMeta | undefined }
   | { type: 'SET_SELECTED_ADDRESS'; payload: string }
   | { type: 'SET_BLOCKS'; payload: string }
-  | { type: 'SET_TREASURY_BALANCE'; payload: BN }
+  | { type: 'SET_TREASURY_BALANCE'; payload: string }
   | { type: 'SET_WEB3_NAME'; payload: string | undefined }
   | { type: 'SET_EMPLOYEES_NBR'; payload: number }
   | { type: 'SET_SKILLS'; payload: string[] };

@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useAppContext } from '../../contexts/AppContext';
-import BN from 'bn.js';
+import { BN, formatBalance } from '@polkadot/util';
 import { toUnit } from '../shared/utils';
 import { useAccountContext } from '../../contexts/AccountContext';
 import { Card } from 'antd';
@@ -25,9 +25,10 @@ export default function Employee() {
     let address0 = selectedAccount.address;
 
     api.query.system.account(address0, ({ data: free }: { data: { free: BN } }) => {
-      let { free: balance2 } = free;
+      formatBalance.setDefaults({ decimals: 11, unit: 'USD' });
+      const free0 = formatBalance(free.free, { withSi: true, withZero: false });
 
-      dispatch1({ type: 'SET_BALANCE', payload: balance2 });
+      dispatch1({ type: 'SET_BALANCE', payload: free0 });
       console.log('user balance', balance);
     });
 
@@ -69,13 +70,8 @@ export default function Employee() {
         style={{ width: 400 }}
       >
         <p>User Id: {user_name === 'John Doe' ? '***' : user_id}</p>
-        <p>
-          User Token balance:{' '}
-          {user_name === 'John Doe' || !balance ? '***' : toUnit(balance, 3).toString()}
-        </p>
-        <p>
-          User wage: {user_name === 'John Doe' || !user_wage ? '***' : user_wage.toString()} USD
-        </p>
+        <p>User Token balance: {user_name === 'John Doe' || !balance ? '***' : balance}</p>
+        <p>User wage: {user_name === 'John Doe' || !user_wage ? '***' : user_wage.toString()}</p>
         <p>User SP: {user_name === 'John Doe' ? '***' : user_sp}</p>
         <p>User XP:{user_name === 'John Doe' ? '***' : user_xp}</p>
         <p>
@@ -99,7 +95,7 @@ export default function Employee() {
               ))}
         </p>
       </Card>
-      <SkillForm />
+      <p>{user_name !== 'John Doe' ? <SkillForm /> : null}</p>
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { useAppContext } from '../../contexts/AppContext';
-import BN from 'bn.js';
+import { BN, formatBalance } from '@polkadot/util';
+import { Card } from 'antd';
 import { NavLink } from 'react-router-dom';
 import { toUnit } from '../shared/utils';
 const treasury_address = '5EYCAe5ijiYfyeZ2JJCGq56LmPyNRAKzpG4QkoQkkQNB5e6Z';
@@ -22,9 +23,10 @@ export default function Dashboard() {
     if (!api) return;
 
     api.query.system.account(treasury_address, ({ data: free }: { data: { free: BN } }) => {
-      let { free: balance1 } = free;
+      formatBalance.setDefaults({ decimals: 11, unit: 'USD' });
+      const free0 = formatBalance(free.free, { withSi: true, withZero: false });
 
-      dispatch({ type: 'SET_TREASURY_BALANCE', payload: balance1 });
+      dispatch({ type: 'SET_TREASURY_BALANCE', payload: free0 });
       console.log('Treasury balance:', treasury_balance);
     });
 
@@ -40,21 +42,24 @@ export default function Dashboard() {
     });
   }, [blocks, api, dispatch]);
 
+  const style1 = { width: 310, height: 250, background: `white` };
   return (
     <div>
       <h1 className="text-3xl text-slate-700 font-bold">DASHBOARD</h1>
       <p className="text-xl font-bold">
-        Treasury Fund: {!treasury_balance ? '0' : toUnit(treasury_balance, 3).toString()} USD
+        Treasury Fund: {!treasury_balance ? '0' : treasury_balance}
       </p>
       <p className="font-bold">Total Number of employees: {total_employees_number}</p>
       <p className="font-bold">
         Skills List (Use the skill number to reference a particular skill):
         <div>
-          {skills.map((sk: any, index: number) => (
-            <div className="font-light">
-              {index}-{sk.metadata}
-            </div>
-          ))}
+          <Card style={style1}>
+            {skills.map((sk: any, index: number) => (
+              <div className="font-light">
+                {index}-{sk.metadata}
+              </div>
+            ))}
+          </Card>
         </div>
       </p>
     </div>

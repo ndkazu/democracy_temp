@@ -1,6 +1,5 @@
 import { InjectedAccountWithMeta } from '@polkadot/extension-inject/types';
 import { ApiPromise } from '@polkadot/api';
-import BN from 'bn.js';
 
 export type Address = string | undefined;
 export interface AppState {
@@ -9,7 +8,7 @@ export interface AppState {
   selectedAccount: InjectedAccountWithMeta | undefined;
   selectedAddress: Address;
   blocks: string;
-  treasury_balance: BN | undefined;
+  treasury_balance: string;
   web3Name: string | undefined;
   total_employees_number: number;
   skills: string[];
@@ -21,19 +20,22 @@ export interface AccountState {
   user_name: string;
   ver_skills: string[];
   unver_skills: string[];
-  balance: BN | undefined;
+  balance: string;
   user_sp: number;
   user_xp: number;
-  user_wage: BN | undefined;
+  user_wage: string;
 }
 
 export interface CouncilSessionState {
   approved: boolean;
+  selected_proposal: Proposal | undefined;
+  proposals: Proposal[];
   session_subject: string;
   session_closed: boolean;
   ayes: number;
   nay: number;
   council_members: InjectedAccountWithMeta[];
+  datas: DataType[];
 }
 
 export interface TaskState {
@@ -42,6 +44,26 @@ export interface TaskState {
   task_list: string[];
   task_description: string | undefined;
   active_curator: InjectedAccountWithMeta | undefined;
+}
+
+export interface Proposal {
+  voter_id: InjectedAccountWithMeta | undefined;
+  Referendum_account: InjectedAccountWithMeta | undefined;
+  session_closed: boolean;
+  approved: boolean;
+  ayes: number;
+  nay: number;
+  hash: string;
+  infos: string;
+}
+
+export interface DataType {
+  name: string | undefined;
+  description: string;
+  status: string;
+  referendum: string;
+  hash: string;
+  infos: string;
 }
 
 export enum SkillLevel {

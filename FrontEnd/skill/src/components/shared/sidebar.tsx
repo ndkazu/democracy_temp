@@ -6,10 +6,10 @@ export default function SideBar() {
     <Sidebar style={{ backgroundColor: 'red' }}>
       <Menu>
         <MenuItem component={<Link to="/Dashboard" />}> DashBoard </MenuItem>
-        <MenuItem> Council </MenuItem>
-
-        <MenuItem> Curator </MenuItem>
         <MenuItem component={<Link to="/employee" />}> Employee </MenuItem>
+        <MenuItem component={<Link to="/market" />}> Task Market </MenuItem>
+        <MenuItem> Curator </MenuItem>
+        <MenuItem component={<Link to="/council" />}> Council </MenuItem>
       </Menu>
     </Sidebar>
   );
