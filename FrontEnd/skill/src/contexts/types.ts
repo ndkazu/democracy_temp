@@ -59,7 +59,6 @@ export interface Proposal {
 
 export interface DataType {
   name: string | undefined;
-  description: string;
   status: string;
   referendum: string;
   hash: string;
