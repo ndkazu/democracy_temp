@@ -1,6 +1,5 @@
 import { createContext, useContext, useReducer, ReactNode } from 'react';
 import { AccountState } from './types';
-import BN from 'bn.js';
 
 const initialState: AccountState = {
   user_id: 0,

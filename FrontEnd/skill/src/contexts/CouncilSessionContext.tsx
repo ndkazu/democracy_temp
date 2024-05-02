@@ -51,11 +51,11 @@ function reducer(state: CouncilSessionState, action: Action): CouncilSessionStat
 }
 
 type CouncilSessionContextType = CouncilSessionState & {
-  dispatch2: React.Dispatch<Action>;
+  dispatch3: React.Dispatch<Action>;
 };
 const CouncilSessionContext = createContext<CouncilSessionContextType>({
   ...initialState,
-  dispatch2: () => {},
+  dispatch3: () => {},
 });
 
 type Props = {
@@ -75,7 +75,7 @@ export function CouncilSessionProvider({ children }: Props) {
       council_members,
       datas,
     },
-    dispatch2,
+    dispatch3,
   ] = useReducer(reducer, initialState);
   return (
     <CouncilSessionContext.Provider
@@ -89,7 +89,7 @@ export function CouncilSessionProvider({ children }: Props) {
         nay,
         council_members,
         datas,
-        dispatch2,
+        dispatch3,
       }}
     >
       {children}

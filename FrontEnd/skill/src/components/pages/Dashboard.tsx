@@ -33,12 +33,12 @@ export default function Dashboard() {
     api.query.skillsModule.employeesNumber((data: number) => {
       let data1 = Number(data.toString());
       dispatch({ type: 'SET_EMPLOYEES_NBR', payload: data1 });
+      console.log(total_employees_number);
     });
 
     api.query.skillsModule.skills((data: any) => {
       let data0 = data.toHuman();
       dispatch({ type: 'SET_SKILLS', payload: data0 });
-      console.log(data0[0].metadata);
     });
   }, [blocks, api, dispatch]);
 

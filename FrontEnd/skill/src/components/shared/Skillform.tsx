@@ -15,19 +15,7 @@ type SkProp = {
 };
 
 export default function SkillForm() {
-  const { api, blocks, accounts, selectedAccount, selectedAddress, dispatch } = useAppContext();
-  const {
-    user_id,
-    address,
-    user_name,
-    ver_skills,
-    unver_skills,
-    balance,
-    user_sp,
-    user_xp,
-    user_wage,
-    dispatch1,
-  } = useAccountContext();
+  const { api, selectedAccount } = useAppContext();
 
   const [sub, setSub] = useState(false);
   const [infos, setInfos] = useState<SkProp>({
