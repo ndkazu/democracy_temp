@@ -3,13 +3,16 @@ import { AppProvider } from './contexts/AppContext';
 import { AccountProvider } from './contexts/AccountContext';
 import { Layout } from './components/shared/Layout';
 import { CouncilSessionProvider } from './contexts/CouncilSessionContext';
+import { TaskProvider } from './contexts/TaskContext';
 
 function App() {
   return (
     <AppProvider>
       <AccountProvider>
         <CouncilSessionProvider>
-          <Layout />
+          <TaskProvider>
+            <Layout />
+          </TaskProvider>
         </CouncilSessionProvider>
       </AccountProvider>
     </AppProvider>
