@@ -124,18 +124,21 @@ export default function Council() {
     if (!api || !selectedAccount) return;
     api.query.council.voting.entries((all: any[]) => {
       all.forEach(([key, value]) => {
-        let inf = value.toHuman();
-        let yes: string[] = inf.ayes;
-        let no: string[] = inf.nays;
+        api.query.skills.skillsProposalList(key, (prop: any) => {
+          if (!prop) return;
+          let inf = value.toHuman();
+          let yes: string[] = inf.ayes;
+          let no: string[] = inf.nays;
 
-        if (yes.includes(selectedAccount.address) || no.includes(selectedAccount.address)) {
-          let tres = yes.length + no.length;
-          setTres(tres);
-          setVoted(true);
-        } else {
-          setVoted(false);
-          setTres(0);
-        }
+          if (yes.includes(selectedAccount.address) || no.includes(selectedAccount.address)) {
+            let tres = yes.length + no.length;
+            setTres(tres);
+            setVoted(true);
+          } else {
+            setVoted(false);
+            setTres(0);
+          }
+        });
       });
     });
   }

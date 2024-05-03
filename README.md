@@ -153,9 +153,6 @@ The series of calls below can be used to replicate a successful worflow:
 
 Part 1
 
-- Alice creates 3 employees: Eve, Ferdie, and Bob_Stash
-  `0x10000c08051cbd2d43530a44705ad088af313e18f80b53ef16b36177cd4b77b846f2a5f07c2c46657264696520426c75650805e659a7a1628cdd93febc04a4e0646ea20e9f5f0ce097d9a05290d4a9e054df4e24457665204576616e730805fe65717dad0447d715f660a0a58411de509b42e6efb8375f562f58a554d5860e2c426f6262792042726f776e`
-
 - Ferdie submits a new skill: "Rust Programming"
   `0x080240527573742050726f6772616d6d696e670102`
 
@@ -186,10 +183,10 @@ Go to the Governance tab-->boounties --> takes 1_min
   `0x0904e659a7a1628cdd93febc04a4e0646ea20e9f5f0ce097d9a05290d4a9e054df4e`
 
 - Alice vote for Curator proposal
-`0x0906e659a7a1628cdd93febc04a4e0646ea20e9f5f0ce097d9a05290d4a9e054df4e0101`
+  `0x0906e659a7a1628cdd93febc04a4e0646ea20e9f5f0ce097d9a05290d4a9e054df4e0101`
 
 - Bob vote/close for Curator proposal
-`0x1000080906e659a7a1628cdd93febc04a4e0646ea20e9f5f0ce097d9a05290d4a9e054df4e01010907e659a7a1628cdd93febc04a4e0646ea20e9f5f0ce097d9a05290d4a9e054df4e01`
+  `0x1000080906e659a7a1628cdd93febc04a4e0646ea20e9f5f0ce097d9a05290d4a9e054df4e01010907e659a7a1628cdd93febc04a4e0646ea20e9f5f0ce097d9a05290d4a9e054df4e01`
 
 - Curator (Bob_Stash) accepts role => Coming soon, available in tests
   `0x0905e659a7a1628cdd93febc04a4e0646ea20e9f5f0ce097d9a05290d4a9e054df4e`
@@ -274,6 +271,24 @@ Install [nix](https://nixos.org/) and
 experience for setting up the development environment.
 To get all the correct dependencies, activate direnv `direnv allow`.
 
-### Docker
+### Docker build & run
 
-Please follow the [Substrate Docker instructions here](https://github.com/paritytech/substrate/blob/master/docker/README.md) to build the Docker container with the Substrate Node Template binary.
+We added a Dockerfile in the repo, you can build an image yourself with the following command `docker build -t skilltracker .`
+
+### Run in Docker in Linux
+
+### Run in Docker in linux
+
+First, install [Docker](https://docs.docker.com/get-docker/) and
+[Docker Compose](https://docs.docker.com/compose/install/).
+
+Then run the following command to start a single node development chain.
+
+```bash
+./scripts/docker_run.sh
+```
+
+The script above will need a folder in the root of this project called `.local` , you will have to create this folder yourself.
+
+This command will start a local development network:
+(`./target/release/node-template --dev --rpc-external`)
