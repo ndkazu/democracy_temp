@@ -1,12 +1,12 @@
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import BN from 'bn.js';
+import { BN, formatBalance } from '@polkadot/util';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
-export function toUnit(balance: BN, decimals: number) {
-  let base = new BN(10).pow(new BN(decimals));
-  let dm = new BN(balance).divmod(base);
-  return parseFloat(dm.div.toString() + '.' + dm.mod.toString());
+export function toUnit(balance: string, decimals: number) {
+  formatBalance.setDefaults({ decimals: 11, unit: 'USD' });
+  let value = formatBalance(new BN(balance), { withSi: true, withZero: false });
+  return value;
 }

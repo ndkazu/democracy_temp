@@ -124,7 +124,7 @@ export default function Council() {
     if (!api || !selectedAccount) return;
     api.query.council.voting.entries((all: any[]) => {
       all.forEach(([key, value]) => {
-        api.query.skills.skillsProposalList(key, (prop: any) => {
+        api.query.skillsModule.skillsProposalList(key, (prop: any) => {
           if (!prop) return;
           let inf = value.toHuman();
           let yes: string[] = inf.ayes;

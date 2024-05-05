@@ -1,7 +1,8 @@
 import React from 'react';
-import { Button, Checkbox } from 'antd';
+import { Button } from 'flowbite-react';
 import type { CheckboxProps } from 'antd';
-import { useState, FormEvent, ChangeEvent } from 'react';
+import { useEffect, ChangeEvent } from 'react';
+import { useForm, FieldError } from 'react-hook-form';
 import { SkillLevel } from '../../contexts/types';
 import { SkillFamily } from '../../contexts/types';
 import { useAccountContext } from '../../contexts/AccountContext';
@@ -9,58 +10,40 @@ import { useAppContext } from '../../contexts/AppContext';
 import { web3FromAddress } from '@polkadot/extension-dapp';
 import { InjectedAccountWithMeta } from '@polkadot/extension-inject/types';
 import { useTaskContext } from '../../contexts/TaskContext';
-import BN from 'bn.js';
 
-type TaskProp = {
+export type TaskProp = {
   needed_sk_id: number;
   reward: number;
   description: string;
-  curator: InjectedAccountWithMeta | undefined;
+  curator: string | undefined;
 };
 
 export default function TaskForm() {
   const { task_owner, task_id, task_list, task_description, active_curator, dispatch2 } =
     useTaskContext();
   const { api, blocks, accounts, selectedAccount, selectedAddress, dispatch } = useAppContext();
-  const {
-    user_id,
-    address,
-    user_name,
-    ver_skills,
-    unver_skills,
-    balance,
-    user_sp,
-    user_xp,
-    user_wage,
-    dispatch1,
-  } = useAccountContext();
 
-  const [infos, setInfos] = useState<TaskProp>({
-    needed_sk_id: 0,
-    reward: 0,
-    description: '',
-    curator: undefined,
-  });
-  function handleSubmit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<TaskProp>();
+
+  function getEditorStyle(fieldError: FieldError | undefined) {
+    return fieldError ? 'border-red-500' : ``;
   }
 
-  const handleAccountSelection = async (e: ChangeEvent<HTMLSelectElement>) => {
-    const selectedAddress = e.target.value;
-    const account = accounts.find((account) => account.address === selectedAddress);
-    if (!account) {
-      throw Error('NO_ACCOUNT_FOUND');
-    }
-  };
-  const submitTask = async () => {
-    if (!api || !selectedAccount) return;
+  const onSubmit = async (task: TaskProp) => {
+    if (!api || !selectedAccount || !task.curator) return;
     let who = selectedAccount.address;
     const injector = await web3FromAddress(who);
-    const tx = api.tx.marketModule.proposeTask(
-      infos.needed_sk_id,
-      infos.reward,
-      infos.description,
-      infos.curator,
+    let converted_reward = task.reward * 1e11;
+    console.log(`The address is:${task.curator}`);
+    const tx = api.tx.market.proposeTask(
+      task.needed_sk_id,
+      converted_reward,
+      task.description,
+      task.curator,
     );
     tx.signAndSend(who, { signer: injector.signer }, ({ status }) => {
       if (status.isInBlock) {
@@ -72,63 +55,67 @@ export default function TaskForm() {
       console.log(':( transaction failed', error);
     });
   };
+
   const fieldStyle = 'flex flex-col mb-2';
   return (
-    <div>
-      <h2>
-        <form>
-          <div>
-            <label htmlFor="needed_sk_id">Needed Skill Index</label>
-            <input
-              type="number"
-              id="needed_sk_id"
-              value={infos.needed_sk_id}
-              onChange={(e) => setInfos({ ...infos, needed_sk_id: Number(e.target.value) })}
-            />
-          </div>
+    <div className={fieldStyle}>
+      <form noValidate onSubmit={handleSubmit(onSubmit)}>
+        <div className={fieldStyle}>
+          <label htmlFor="needed_sk_id">Needed Skill Index</label>
+          <input
+            type="number"
+            id="needed_sk_id"
+            className={getEditorStyle(errors.needed_sk_id)}
+            {...register('needed_sk_id')}
+          />
+        </div>
 
-          <div>
-            <label htmlFor="reward">Task Reward</label>
-            <input
-              type="number"
-              id="reward"
-              value={infos.reward}
-              onChange={(e) => setInfos({ ...infos, reward: Number(e.target.value) })}
-            />
-          </div>
+        <div className={fieldStyle}>
+          <label htmlFor="reward">Task Reward (USD)</label>
+          <input
+            type="number"
+            defaultValue="6"
+            id="reward"
+            {...register('reward', { min: { value: 6, message: 'Amount below minimum' } })}
+          />
+        </div>
 
-          <div className={fieldStyle}>
-            <label htmlFor="description">Task Description</label>
-            <input
-              type="text"
-              id="description"
-              value={infos.description}
-              onChange={(e) => setInfos({ ...infos, description: e.target.value })}
-            />
-          </div>
+        <div className={fieldStyle}>
+          <label htmlFor="description">Task Description</label>
+          <input
+            type="text"
+            id="description"
+            className={getEditorStyle(errors.description)}
+            {...register('description', { required: 'You need to provide a task description' })}
+          />
+        </div>
 
-          <div className={fieldStyle}>
-            <label htmlFor="curator">Task Description</label>
-            {accounts.length > 0 && !selectedAccount ? (
-              <select
-                value={selectedAddress}
-                onChange={handleAccountSelection}
-                className="outline-neutral-800 rounded-md py-1"
-              >
-                <option value="" disabled selected hidden key="nothing">
-                  Select an account
+        <div className={fieldStyle}>
+          <label htmlFor="curator">Curator</label>
+          {accounts.length > 0 ? (
+            <select
+              id="account"
+              className="outline-neutral-800 rounded-md py-1"
+              {...register('curator')}
+            >
+              <option value="" disabled selected hidden key="nothing">
+                Select an account
+              </option>
+
+              {accounts.map((account) => (
+                <option value={account.address} key={account.address}>
+                  {account.meta.name}
                 </option>
-
-                {accounts.map((account) => (
-                  <option value={account.address} key={account.address}>
-                    {account.meta.name || account.address}
-                  </option>
-                ))}
-              </select>
-            ) : null}
-          </div>
-        </form>
-      </h2>
+              ))}
+            </select>
+          ) : null}
+        </div>
+        <div>
+          <Button type="submit" className="bg-blue-600 text-white font-bold   text-xl">
+            Submit
+          </Button>
+        </div>
+      </form>
     </div>
   );
 }
