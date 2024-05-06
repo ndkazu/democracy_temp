@@ -40,18 +40,16 @@ export default function Market() {
     reward: '',
     needed_skills: [],
   });
-  const getTasksInfos = async () => {
+
+  const getTasksInfos0 = async () => {
     if (!api || !selectedAccount) return;
-    let infos_all: string[] = [];
-    let infos0: TaskData = tsk;
-    let inf: TaskData[] = [];
+    let infos_all: TaskData[] = [];
 
     await api.query.bounties.bounties.entries((bount: any[]) => {
+      if (bount.length === 0) return;
       bount.forEach(([key, value]) => {
         let datas = value.toHuman();
-        infos0.address = datas.proposer;
         let key0 = key.toHuman();
-        infos0.task_id = key0;
         formatBalance.setDefaults({ decimals: 11, unit: 'USD' });
         let data0: string[] = datas.value.toString().split(',');
         let data = data0.join('');
@@ -59,38 +57,35 @@ export default function Market() {
           withSi: true,
           withZero: false,
         });
-        infos0.reward = reward;
-        let status = datas.status;
-        api.queryMulti(
-          [
-            [api.query.skillsModule.employeeLog, infos0.address],
-            [api.query.market.taskSkills, key0],
-          ],
-          ([employee, data]) => {
-            let data_e: any = employee.toHuman();
-            let name = data_e.name;
-            let info0 = `Task ID: ${key0};Task Owner: ${name};Task Reward:${reward};Task Status:${status}`;
-            infos_all.push(info0);
-            let d0: any = data.toHuman();
-            infos0.needed_skills = d0;
-            infos0.task_owner = name;
 
-            setTsk(infos0);
-            console.log(tsk);
-            inf.push(tsk);
-            setInfos(inf);
-          },
-        );
+        let dum = { ...tsk, address: datas.proposer, task_id: key0, reward: reward };
+
+        infos_all.push(dum);
+        setInfos(infos_all);
       });
-
-      dispatch2({ type: 'SET_TASK_LIST', payload: infos_all });
     });
   };
 
+  function getTasksInfos1() {
+    if (!api || !selectedAccount) return;
+    let infos_all: TaskData[] = [];
+    infos.forEach((x) => {
+      api.query.skillsModule.employeeLog(x.address, (y: any) => {
+        let employee = y.toHuman();
+        let name = employee.name;
+        let ts = { ...x, task_owner: name };
+        infos_all.push(ts);
+
+        setInfos(infos_all);
+      });
+    });
+  }
+
   useEffect(() => {
     if (!api || !selectedAccount) return;
-    setInfos([]);
-    getTasksInfos();
+
+    getTasksInfos0();
+    getTasksInfos1();
     console.log(infos);
   }, [api, selectedAccount, blocks]);
 
